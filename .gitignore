@@ -1,0 +1,5 @@
+node_modules/
+src/public/bower_components/
+test/coverage
+.idea/
+npm-debug*
