@@ -1,7 +1,12 @@
 var rp = require('request-promise');
+var io = require('./io');
 
 var goCdClient = {};
 pipelines = {};
+
+io.on('connection', function (socket) {
+    socket.emit('stage-change', pipelines);
+});
 
 goCdClient.refresh = function() {
     rp({
@@ -28,10 +33,13 @@ goCdClient.refresh = function() {
             });
         });
     });
-}();
-
-goCdClient.getPipelines = function() {
-    return pipelines;    
 };
+
+goCdClient.refresh();
+
+setInterval(function() {
+    io.sockets.emit('stage-change', pipelines);
+    goCdClient.refresh();
+}, 60 * 1000);
 
 module.exports = goCdClient;
