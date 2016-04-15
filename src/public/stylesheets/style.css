@@ -7,7 +7,6 @@ html, body, p {
     display:flex;
     flex-direction: column;
     background: #123C4A;
-    text-align: center;
     font-size: large;
     color: white;
     min-height: 100vh;
@@ -15,23 +14,20 @@ html, body, p {
 
 .pipeline {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    flex: 1;
+    flex: 1 auto;
 }
 
-.pipeline-name {
+.pipeline-name, .stage {
+    flex: 0 auto;
+    min-width: 150px;
     display: flex;
-    flex: 0 0 150px;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .stage {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 3;
+    flex: 1 auto;
     border-radius: 10px;
     border: 2px solid #123C4A;
 }

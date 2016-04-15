@@ -1,8 +1,10 @@
 <div class="dashboard-container">
     <div class="pipeline" ng-repeat="(key, pipeline) in pipelines">
-        <div class="pipeline-name">{{key}}</div>
+        <div class="pipeline-name">
+            {{key}}
+        </div>
         <div class="stage" ng-class="{'stage-success': stage.success, 'stage-failed': !stage.success}" ng-repeat="(key, stage) in pipeline">
-            <p>{{key}} {{stage.build_number}}</p>
+            <p class="pipeline-text">{{key}} {{stage.build_number}}</p>
         </div>
     </div>
 </div>
