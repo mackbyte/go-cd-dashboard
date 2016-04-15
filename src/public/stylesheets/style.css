@@ -18,12 +18,17 @@ html, body, p {
 }
 
 .pipeline-name, .stage {
-    flex: 0 auto;
-    min-width: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
+    min-width: 0;
+    min-height: 0;
+}
+
+.pipeline-name {
+    flex: 0 auto;
+    min-width: 175px;
 }
 
 .stage {
