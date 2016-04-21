@@ -22,13 +22,12 @@ html, body, p {
     align-items: center;
     justify-content: center;
     text-align: center;
-    min-width: 0;
-    min-height: 0;
 }
 
 .pipeline-name {
     flex: 0 auto;
     min-width: 175px;
+    max-width: 175px;
 }
 
 .stage {
