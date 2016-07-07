@@ -1,45 +1,49 @@
-var rp = require('request-promise');
-var io = require('./io');
+var request = require('request');
 
-var goCdClient = {};
-pipelines = {};
+var gocdClient = {};
 
-io.on('connection', function (socket) {
-    socket.emit('stage-change', pipelines);
-});
+function allStagesPassed(stages) {
 
-goCdClient.refresh = function() {
-    rp({
-        uri: 'http://nebapi:1fe568jtxJPCmKJD@nebmgttgo01.ath.cdi.bskyb.com/go/api/config/pipeline_groups',
-        json: true
-    }).then(function(res) {
-        res.forEach(function(pipelineGroup) {
-            pipelineGroup.pipelines.forEach(function(pipeline) {
-                pipelines[pipeline.name] = {};
-                pipeline.stages.forEach(function(stage) {
-                    rp({
-                        uri: 'http://nebapi:1fe568jtxJPCmKJD@nebmgttgo01.ath.cdi.bskyb.com/go/api/stages/'+ pipeline.name +'/'+ stage.name +'/history',
-                        json: true
-                    }).then(function(resp) {
-                        var stageResult = resp.stages[0];
-                        if(stageResult) {
-                            pipelines[pipeline.name][stageResult.name] = {
-                                success: stageResult.result == 'Passed',
-                                build_number: stageResult.pipeline_counter
-                            };
-                        }
-                    })
-                })
-            });
-        });
-    });
+}
+
+gocdClient.getPipelineStatus = function(pipeline, callback) {
+    request
+        .get('http://nebmgttgo01.ath.cdi.bskyb.com/go/api/pipelines/'+ pipeline +'/history', function(error, response, body) {
+            if(!error && response.statusCode == 200) {
+                var pipelineResult = JSON.parse(body).pipelines[0];
+                if(pipelineResult) {
+                    var lastStage = pipelineResult.stages.slice(-1).pop();
+                    callback({
+                        "status": lastStage.result,
+                        "build-number": pipelineResult.counter
+                    });
+                }
+            } else {
+                callback(null);
+            }
+        })
+        .auth('nebapi', '1fe568jtxJPCmKJD', false)
 };
 
-goCdClient.refresh();
+gocdClient.getAllPipelines = function(callback) {
+    request
+        .get('http://nebmgttgo01.ath.cdi.bskyb.com/go/api/config/pipeline_groups', function(error, response, body) {
+            if(!error && response.statusCode == 200) {
+                var groups = JSON.parse(body);
+                if(groups && groups.length > 0) {
+                    var pipelines = {};
+                    groups.forEach(function(pipelineGroup) {
+                        pipelines[pipelineGroup.name] = pipelineGroup.pipelines.map(function(pipeline) {return pipeline.name;})
+                    });
+                    callback(pipelines);
+                } else {
+                    callback(null);
+                }
+            } else {
+                callback(null);
+            }
+        })
+        .auth('nebapi', '1fe568jtxJPCmKJD', false)
+};
 
-setInterval(function() {
-    io.sockets.emit('stage-change', pipelines);
-    goCdClient.refresh();
-}, 60 * 1000);
-
-module.exports = goCdClient;
+module.exports = gocdClient;

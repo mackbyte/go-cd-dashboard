@@ -4,14 +4,12 @@ angular.module('app.directives')
             templateUrl: 'templates/dashboard.html',
             restrict: 'E',
             link: function postLink($scope, element, attrs) {
-                var socket = io();
-                
                 $scope.pipelines = {};
-                
-                socket.on('stage-change', function(data) {
-                    $scope.pipelines = data;
-                    $scope.$apply();
-                });
+
+                $http.get('/pipelines')
+                    .success(function(res) {
+                        $scope.pipelines = res;
+                    });
             }
         };
     });
