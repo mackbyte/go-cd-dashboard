@@ -10,6 +10,10 @@ angular.module('app.directives')
                     .success(function(res) {
                         $scope.pipelineGroups = res;
                     });
+
+                $scope.stripPipelineName = function(groupName, pipelineLabel) {
+                    return pipelineLabel.replace(groupName+"-", "")
+                }
             }
         };
     }]);
