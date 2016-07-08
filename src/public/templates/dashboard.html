@@ -3,7 +3,10 @@
         <div class="pipeline-name">
             {{groupName}}
         </div>
-        <div class="stage" ng-class="{'stage-success': pipeline.status === 'Passed', 'stage-failed': pipeline.status !== 'Passed'}" ng-repeat="(pipelineName, pipeline) in group">
+        <div class="stage"
+             ng-style="{order: pipeline.order}"
+             ng-class="{'stage-success': pipeline.status === 'Passed', 'stage-failed': pipeline.status !== 'Passed'}"
+             ng-repeat="(pipelineName, pipeline) in group">
             <p class="pipeline-text">{{pipelineName}} {{pipeline.build_number}}</p>
         </div>
     </div>
