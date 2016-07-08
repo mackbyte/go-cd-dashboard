@@ -5,20 +5,31 @@ var gocdClient = require('./gocdClient'),
 pipelinesService.update = function() {
     gocdClient.getAllPipelines(function(pipelineGroups) {
         if(pipelineGroups) {
-            for (var pipelineGroup in pipelineGroups) {
-                var pipelines = pipelineGroups[pipelineGroup];
-                for (var i = 0; i < pipelines.length; i++) {
-                    gocdClient.getPipelineStatus(pipelines[i], function(pipelineStatus) {
-                        if(!pipelinesState[pipelineGroup]) {
-                            pipelinesState[pipelineGroup] = {}
-                        }
-                        pipelinesState[pipelineGroup][pipelines[i]] = pipelineStatus;
-                    })
-                }
+            for (var groupName in pipelineGroups) {
+                updatePipelineGroup(groupName, pipelineGroups[groupName]);
             }
         }
     });
 };
+
+function initialiseGroup(groupName) {
+    if(!pipelinesState[groupName]) {
+        pipelinesState[groupName] = {}
+    }
+}
+
+function updatePipelineGroup(groupName, pipelineNames) {
+    initialiseGroup(groupName);
+    for (var i = 0; i < pipelineNames.length; i++) {
+        updatePipeline(pipelineNames[i], groupName);
+    }
+}
+
+function updatePipeline(pipelineName, groupName) {
+    gocdClient.getPipelineStatus(pipelineName, function(state) {
+        pipelinesState[groupName][pipelineName] = state;
+    })
+}
 
 pipelinesService.getPipelines = function() {
     return pipelinesState;
