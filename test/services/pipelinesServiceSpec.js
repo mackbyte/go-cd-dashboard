@@ -24,21 +24,17 @@ describe('Pipelines Service', function() {
             sinon.stub(gocdClient, 'getPipelineStatus').yields({"status": "Passed", "build-number": 1});
             var pipelinesService = require('../../src/services/pipelinesService');
 
-            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
-            pipelines.should.deep.equal({
-                "Application": {
-                    "Build": {
-                        "status": "Passed",
-                        "build-number": 1
-                    },
-                    "Test": {
-                        "status": "Passed",
-                        "build-number": 1
-                    }
-                }
-            });
+
+            pipelines.should.have.property("Application");
+            pipelines.Application.should.have.property("Build");
+            pipelines.Application.Build.should.have.property("build-number", 1);
+            pipelines.Application.Build.should.have.property("status", "Passed");
+
+            pipelines.Application.should.have.property("Test");
+            pipelines.Application.Test.should.have.property("build-number", 1);
+            pipelines.Application.Test.should.have.property("status", "Passed");
 
             gocdClient.getAllPipelines.restore();
             gocdClient.getPipelineStatus.restore();
@@ -49,30 +45,56 @@ describe('Pipelines Service', function() {
             sinon.stub(gocdClient, 'getPipelineStatus').yields({"status": "Passed", "build-number": 1});
             var pipelinesService = require('../../src/services/pipelinesService');
 
-            pipelinesService.update();
+            var pipelines = pipelinesService.getPipelines();
+            should.exist(pipelines);
+
+            pipelines.should.have.property("Application1");
+            pipelines.Application1.should.have.property("Build");
+            pipelines.Application1.Build.should.have.property("build-number", 1);
+            pipelines.Application1.Build.should.have.property("status", "Passed");
+
+            pipelines.should.have.property("Application2");
+            pipelines.Application2.should.have.property("Publish");
+            pipelines.Application2.Publish.should.have.property("build-number", 1);
+            pipelines.Application2.Publish.should.have.property("status", "Passed");
+
+            pipelines.Application2.should.have.property("Deploy");
+            pipelines.Application2.Deploy.should.have.property("build-number", 1);
+            pipelines.Application2.Deploy.should.have.property("status", "Passed");
+
+            gocdClient.getAllPipelines.restore();
+            gocdClient.getPipelineStatus.restore();
+        });
+
+        xit("should return order of pipeline as the order specified in the group", function() {
+            sinon.stub(gocdClient, 'getAllPipelines').yields({"Application": ["Build", "Publish", "Deploy"]});
+            sinon.stub(gocdClient, 'getPipelineStatus').yields({"status": "Passed", "build-number": 1});
+            var pipelinesService = require('../../src/services/pipelinesService');
+
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({
-                "Application1": {
+                "Application": {
                     "Build": {
                         "status": "Passed",
-                        "build-number": 1
-                    }
-                },
-                "Application2": {
-                    "Publish": {
-                        "status": "Passed",
-                        "build-number": 1
+                        "build-number": 1,
+                        "order": 0
                     },
                     "Deploy": {
                         "status": "Passed",
-                        "build-number": 1
+                        "build-number": 1,
+                        "order": 2
+                    },
+                    "Publish": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 1
                     }
                 }
             });
 
             gocdClient.getAllPipelines.restore();
             gocdClient.getPipelineStatus.restore();
-        })
+        });
     });
 });

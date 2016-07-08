@@ -20,13 +20,14 @@ function initialiseGroup(groupName) {
 
 function updatePipelineGroup(groupName, pipelineNames) {
     initialiseGroup(groupName);
-    for (var i = 0; i < pipelineNames.length; i++) {
-        updatePipeline(pipelineNames[i], groupName);
-    }
+    pipelineNames.forEach(function(pipelineName, index) {
+        updatePipeline(pipelineName, groupName, index);
+    });
 }
 
-function updatePipeline(pipelineName, groupName) {
+function updatePipeline(pipelineName, groupName, order) {
     gocdClient.getPipelineStatus(pipelineName, function(state) {
+        state.order = order;
         pipelinesState[groupName][pipelineName] = state;
     })
 }
