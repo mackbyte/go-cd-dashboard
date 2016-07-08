@@ -1,10 +1,10 @@
 <div class="dashboard-container">
-    <div class="pipeline" ng-repeat="(key, pipeline) in pipelines">
+    <div class="pipeline" ng-repeat="(groupName, group) in pipelineGroups">
         <div class="pipeline-name">
-            {{key}}
+            {{groupName}}
         </div>
-        <div class="stage" ng-class="{'stage-success': stage.success, 'stage-failed': !stage.success}" ng-repeat="(key, stage) in pipeline">
-            <p class="pipeline-text">{{key}} {{stage.build_number}}</p>
+        <div class="stage" ng-class="{'stage-success': pipeline.status === 'Passed', 'stage-failed': pipeline.status !== 'Passed'}" ng-repeat="(pipelineName, pipeline) in group">
+            <p class="pipeline-text">{{pipelineName}} {{pipeline.build_number}}</p>
         </div>
     </div>
 </div>
