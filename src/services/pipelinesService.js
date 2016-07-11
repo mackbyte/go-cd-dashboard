@@ -38,4 +38,12 @@ pipelinesService.getPipelines = function() {
 
 pipelinesService.update();
 
+function refresh() {
+    setTimeout(function() {
+        pipelinesService.update();
+        refresh()
+    }, 30000);
+}
+refresh();
+
 module.exports = pipelinesService;
