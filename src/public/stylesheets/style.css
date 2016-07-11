@@ -43,3 +43,7 @@ html, body, p {
 .stage-failed {
     background: #C70A0E;
 }
+
+.stage-unknown {
+    background: #D9B32A;
+}

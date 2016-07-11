@@ -13,7 +13,17 @@ angular.module('app.directives')
 
                 $scope.stripPipelineName = function(groupName, pipelineLabel) {
                     return pipelineLabel.replace(groupName+"-", "")
-                }
+                };
+
+                $scope.getStatusClass = function(status) {
+                    if(status === 'Passed') {
+                        return 'stage-success';
+                    } else if(status === 'Unknown') {
+                        return 'stage-unknown';
+                    } else {
+                        return 'stage-failed';
+                    }
+                };
             }
         };
     }]);
