@@ -4,7 +4,8 @@ var gocdResponseBuilder = require('../utils/gocdResponseBuilder'),
     PipelineSummaryBuilder = gocdResponseBuilder.PipelineSummaryBuilder,
     PipelineHistoryBuilder = gocdResponseBuilder.PipelineHistoryBuilder,
     PipelineBuilder = gocdResponseBuilder.PipelineBuilder,
-    StageBuilder = gocdResponseBuilder.StageBuilder;
+    StageBuilder = gocdResponseBuilder.StageBuilder,
+    MaterialBuilder = gocdResponseBuilder.MaterialBuilder;
     should = require('chai').should();
 
 describe('GoCD Response Builder', function() {
@@ -114,7 +115,7 @@ describe('GoCD Response Builder', function() {
                 ]
             };
             pipelineGroup.should.deep.equal(expected)
-        })
+        });
     });
     
     describe("Pipeline History Builder", function() {
@@ -130,7 +131,10 @@ describe('GoCD Response Builder', function() {
                                 "name": "Build",
                                 "result": "Passed"
                             }
-                        ]
+                        ],
+                        "build_cause": {
+                            "material_revisions": []
+                        }
                     }
                 ]
             };
@@ -150,7 +154,10 @@ describe('GoCD Response Builder', function() {
                         "name": "Build",
                         "result": "Passed"
                     }
-                ]
+                ],
+                "build_cause": {
+                    "material_revisions": []
+                }
             };
             pipeline.should.deep.equal(expected);
         });
@@ -171,7 +178,10 @@ describe('GoCD Response Builder', function() {
                         "name": "Build",
                         "result": "Passed"
                     }
-                ]
+                ],
+                "build_cause": {
+                    "material_revisions": []
+                }
             };
             pipeline.should.deep.equal(expected);
         });
@@ -190,7 +200,10 @@ describe('GoCD Response Builder', function() {
                         "name": "Other",
                         "result": "Passed"
                     }
-                ]
+                ],
+                "build_cause": {
+                    "material_revisions": []
+                }
             };
             pipeline.should.deep.equal(expected);
         });
@@ -216,7 +229,10 @@ describe('GoCD Response Builder', function() {
                         "name": "Two",
                         "result": "Passed"
                     }
-                ]
+                ],
+                "build_cause": {
+                    "material_revisions": []
+                }
             };
             pipeline.should.deep.equal(expected);
         });
@@ -227,6 +243,40 @@ describe('GoCD Response Builder', function() {
                 .build();
 
             pipeline.counter.should.equal(5);
+        });
+        
+        it("should be able to add materials", function() {
+            var pipeline = new PipelineBuilder()
+                .withMaterial(new MaterialBuilder())
+                .build();
+
+            should.exist(pipeline.build_cause.material_revisions);
+            pipeline.build_cause.material_revisions.should.have.length(1);
+
+            var material = pipeline.build_cause.material_revisions[0].material;
+            material.should.have.property("description", "upstream-pipeline");
+            material.should.have.property("type", "Pipeline");
+        });
+
+        it("should be able to add materials", function() {
+            var pipeline = new PipelineBuilder()
+                .withMaterial(new MaterialBuilder())
+                .addMaterial(new MaterialBuilder()
+                    .withDescription("github.com")
+                    .withType("git")
+                )
+                .build();
+
+            should.exist(pipeline.build_cause.material_revisions);
+            pipeline.build_cause.material_revisions.should.have.length(2);
+
+            var material = pipeline.build_cause.material_revisions[0].material;
+            material.should.have.property("description", "upstream-pipeline");
+            material.should.have.property("type", "Pipeline");
+
+            var material2 = pipeline.build_cause.material_revisions[1].material;
+            material2.should.have.property("description", "github.com");
+            material2.should.have.property("type", "git");
         });
     });
 
@@ -256,5 +306,38 @@ describe('GoCD Response Builder', function() {
 
             stage.result.should.equal("Failed");
         });
-    })
+    });
+
+    describe("Material Builder", function() {
+        it("should default to material with description and type", function() {
+            var material = new MaterialBuilder().build();
+
+            material.should.deep.equal({
+                "description": "upstream-pipeline",
+                "type": "Pipeline"
+            })
+        });
+
+        it("should be able to set description", function() {
+            var material = new MaterialBuilder()
+                .withDescription("my-description")
+                .build();
+
+            material.should.deep.equal({
+                "description": "my-description",
+                "type": "Pipeline"
+            })
+        });
+
+        it("should be able to set type", function() {
+            var material = new MaterialBuilder()
+                .withType("my-type")
+                .build();
+
+            material.should.deep.equal({
+                "description": "upstream-pipeline",
+                "type": "my-type"
+            })
+        });
+    });
 });

@@ -2,8 +2,12 @@ var request = require('request');
 
 var gocdClient = {};
 
-function allStagesPassed(stages) {
-
+function getAllUpstreamPipelines(material_revisions) {
+    return material_revisions.filter(function(mat_rev) {
+        return mat_rev.material.type == "Pipeline";
+    }).map(function(mat_rev) {
+        return mat_rev.material.description;
+    })
 }
 
 gocdClient.getPipelineStatus = function(pipeline, callback) {
@@ -15,7 +19,8 @@ gocdClient.getPipelineStatus = function(pipeline, callback) {
                     var lastStage = pipelineResult.stages.slice(-1).pop();
                     callback({
                         "status": lastStage.result,
-                        "build-number": pipelineResult.counter
+                        "build-number": pipelineResult.counter,
+                        "upstream": getAllUpstreamPipelines(pipelineResult.build_cause.material_revisions)
                     });
                 }
             } else {

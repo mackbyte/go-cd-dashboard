@@ -5,6 +5,7 @@ var gocdClient = require('../../src/services/gocdClient'),
     PipelineHistoryBuilder = gocdResponseBuilder.PipelineHistoryBuilder,
     PipelineGroupBuilder = gocdResponseBuilder.PipelineGroupBuilder,
     PipelineGroupsBuilder = gocdResponseBuilder.PipelineGroupsBuilder,
+    MaterialBuilder = gocdResponseBuilder.MaterialBuilder,
     nock = require('nock'),
     should = require('chai').should();
 
@@ -54,6 +55,80 @@ describe('GoCD Client', function() {
                 should.exist(pipeline);
                 pipeline.should.have.property('status', 'Failed');
                 pipeline.should.have.property('build-number', 1);
+                done();
+            });
+        });
+
+        it("should return list of upstream pipelines if available", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("pre-build")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
+                should.exist(pipeline);
+                pipeline.upstream.should.have.members(['pre-build']);
+                done();
+            });
+        });
+
+        it("should return empty list of upstream pipelines if not available", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder())
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
+                should.exist(pipeline);
+                pipeline.upstream.should.be.empty;
+                done();
+            });
+        });
+
+        it("should return empty list of upstream pipelines if material type is not Pipeline", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("upstream")
+                            .withType("git")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
+                should.exist(pipeline);
+                pipeline.upstream.should.be.empty;
+                done();
+            });
+        });
+
+        it("should return all upstream pipelines that have material type of Pipeline", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("builder")
+                            .withType("Pipeline")
+                        )
+                        .addMaterial(new MaterialBuilder()
+                            .withDescription("github")
+                            .withType("git")
+                        )
+                        .addMaterial(new MaterialBuilder()
+                            .withDescription("publisher")
+                            .withType("Pipeline")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
+                should.exist(pipeline);
+                pipeline.upstream.should.have.members(['builder', 'publisher']);
                 done();
             });
         });

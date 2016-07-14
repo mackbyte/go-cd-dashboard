@@ -38,7 +38,7 @@ PipelineHistoryBuilder.prototype.withPipeline = function(pipeline) {
 };
 
 PipelineHistoryBuilder.prototype.build = function() {
-    var pipelines =[];
+    var pipelines = [];
     this.pipelines.forEach(function(pipeline) {
         pipelines.push(pipeline.build())
     });
@@ -50,7 +50,8 @@ PipelineHistoryBuilder.prototype.build = function() {
 var PipelineBuilder = function() {
     this.name = "Dev";
     this.stages = [new StageBuilder()];
-    this.counter = 1
+    this.counter = 1;
+    this.materials = [];
 };
 
 PipelineBuilder.prototype.withName = function(name) {
@@ -73,22 +74,41 @@ PipelineBuilder.prototype.addStage = function(stage) {
     return this;
 };
 
+PipelineBuilder.prototype.withMaterial = function(material) {
+    this.materials = [material];
+    return this;
+};
+
+PipelineBuilder.prototype.addMaterial = function(material) {
+    this.materials.push(material);
+    return this;
+};
+
 PipelineBuilder.prototype.build = function() {
     var pipeline = this;
-    var stages =[];
+    var stages = [];
     this.stages.forEach(function(stage) {
         stages.push(stage.build())
     });
+
+    var materials = [];
+    this.materials.forEach(function(material) {
+        materials.push({material: material.build()})
+    });
+
     return {
         name: pipeline.name,
         stages: stages,
-        counter: pipeline.counter
+        counter: pipeline.counter,
+        build_cause: {
+            material_revisions: materials
+        }
     }
 };
 
 var PipelineSummaryBuilder = function() {
     this.name = "Dev";
-    this.stages = [{name: "Build"}];    
+    this.stages = [{name: "Build"}];
 };
 
 PipelineSummaryBuilder.prototype.withName = function(name) {
@@ -146,7 +166,7 @@ PipelineGroupBuilder.prototype.build = function() {
 };
 
 var PipelineGroupsBuilder = function() {
-    this.groups = [new PipelineGroupBuilder()]    
+    this.groups = [new PipelineGroupBuilder()]
 };
 
 PipelineGroupsBuilder.prototype.addGroup = function(group) {
@@ -168,12 +188,36 @@ PipelineGroupsBuilder.prototype.build = function() {
     return groups
 };
 
+var MaterialBuilder = function() {
+    this.description = "upstream-pipeline";
+    this.type = "Pipeline";
+};
+
+MaterialBuilder.prototype.withDescription = function(description) {
+    this.description = description;
+    return this;
+};
+
+MaterialBuilder.prototype.withType = function(type) {
+    this.type = type;
+    return this;
+};
+
+MaterialBuilder.prototype.build = function() {
+    var material = this;
+    return {
+        "description": material.description,
+        "type": material.type
+    }
+};
+
 module.exports = {
     StageBuilder: StageBuilder,
     PipelineBuilder: PipelineBuilder,
     PipelineHistoryBuilder: PipelineHistoryBuilder,
     PipelineSummaryBuilder: PipelineSummaryBuilder,
     PipelineGroupBuilder: PipelineGroupBuilder,
-    PipelineGroupsBuilder: PipelineGroupsBuilder
+    PipelineGroupsBuilder: PipelineGroupsBuilder,
+    MaterialBuilder: MaterialBuilder
 };
 

@@ -4,24 +4,38 @@ var gocdClient = require('../../src/services/gocdClient'),
 
 describe('Pipelines Service', function() {
     describe("Get Pipelines", function() {
+        var pipelineStatusStub,
+            allPipelinesStub;
+
+        beforeEach(function(){
+            pipelineStatusStub = sinon.stub(gocdClient, 'getPipelineStatus');
+            allPipelinesStub = sinon.stub(gocdClient, 'getAllPipelines');
+        });
+
         afterEach(function() {
+            gocdClient.getAllPipelines.restore();
+            gocdClient.getPipelineStatus.restore();
             delete require.cache[require.resolve('../../src/services/pipelinesService')]
         });
 
         it("should default to empty object", function() {
-            sinon.stub(gocdClient, 'getAllPipelines').yields({});
+            allPipelinesStub.yields({});
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({});
-
-            gocdClient.getAllPipelines.restore();
         });
 
         it("should get list of pipelines for single group with status and build number", function() {
-            sinon.stub(gocdClient, 'getAllPipelines').yields({"Application": ["Build", "Test"]});
-            sinon.stub(gocdClient, 'getPipelineStatus').yields({"status": "Passed", "build-number": 1});
+            allPipelinesStub.yields({"Application": ["Build", "Test"]});
+            pipelineStatusStub
+                .withArgs("Build")
+                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+
+            pipelineStatusStub
+                .withArgs("Test")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build"]});
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
@@ -35,14 +49,22 @@ describe('Pipelines Service', function() {
             pipelines.Application.should.have.property("Test");
             pipelines.Application.Test.should.have.property("build-number", 1);
             pipelines.Application.Test.should.have.property("status", "Passed");
-
-            gocdClient.getAllPipelines.restore();
-            gocdClient.getPipelineStatus.restore();
         });
 
         it("should get list of all pipelines for multiple groups with status", function() {
-            sinon.stub(gocdClient, 'getAllPipelines').yields({"Application1": ["Build"], "Application2": ["Publish", "Deploy"]});
-            sinon.stub(gocdClient, 'getPipelineStatus').yields({"status": "Passed", "build-number": 1});
+            allPipelinesStub.yields({"Application1": ["Build"], "Application2": ["Publish", "Deploy"]});
+            pipelineStatusStub
+                .withArgs("Build")
+                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+
+            pipelineStatusStub
+                .withArgs("Publish")
+                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+
+            pipelineStatusStub
+                .withArgs("Deploy")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["Publish"]});
+
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
@@ -61,14 +83,24 @@ describe('Pipelines Service', function() {
             pipelines.Application2.should.have.property("Deploy");
             pipelines.Application2.Deploy.should.have.property("build-number", 1);
             pipelines.Application2.Deploy.should.have.property("status", "Passed");
-
-            gocdClient.getAllPipelines.restore();
-            gocdClient.getPipelineStatus.restore();
         });
 
-        xit("should return order of pipeline as the order specified in the group", function() {
-            sinon.stub(gocdClient, 'getAllPipelines').yields({"Application": ["Build", "Publish", "Deploy"]});
-            sinon.stub(gocdClient, 'getPipelineStatus').yields({"status": "Passed", "build-number": 1});
+        it("should return order of pipeline as the order specified in the group", function() {
+            allPipelinesStub
+                .yields({"Application": ["Build", "Publish", "Deploy"]});
+
+            pipelineStatusStub
+                .withArgs("Build")
+                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+
+            pipelineStatusStub
+                .withArgs("Publish")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build"]});
+
+            pipelineStatusStub
+                .withArgs("Deploy")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["Publish"]});
+
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
@@ -92,9 +124,6 @@ describe('Pipelines Service', function() {
                     }
                 }
             });
-
-            gocdClient.getAllPipelines.restore();
-            gocdClient.getPipelineStatus.restore();
         });
     });
 });
