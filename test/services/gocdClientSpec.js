@@ -71,7 +71,7 @@ describe('GoCD Client', function() {
 
             gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
                 should.exist(pipeline);
-                pipeline.upstream.should.have.members(['pre-build']);
+                pipeline.upstream.should.deep.equal(['pre-build']);
                 done();
             });
         });
@@ -89,13 +89,13 @@ describe('GoCD Client', function() {
             });
         });
 
-        it("should return empty list of upstream pipelines if material type is not Pipeline", function(done) {
+        it("should return empty list of upstream pipelines if material type is not Pipeline or Git", function(done) {
             mockPipelineHistory(200,
                 new PipelineHistoryBuilder()
                     .withPipeline(new PipelineBuilder()
                         .withMaterial(new MaterialBuilder()
                             .withDescription("upstream")
-                            .withType("git")
+                            .withType("repo")
                         )
                     )
                     .build());
@@ -117,10 +117,55 @@ describe('GoCD Client', function() {
                         )
                         .addMaterial(new MaterialBuilder()
                             .withDescription("github")
-                            .withType("git")
+                            .withType("Git")
                         )
                         .addMaterial(new MaterialBuilder()
                             .withDescription("publisher")
+                            .withType("Pipeline")
+                        )
+                        .addMaterial(new MaterialBuilder()
+                            .withDescription("some other dependency")
+                            .withType("Other")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
+                should.exist(pipeline);
+                pipeline.upstream.should.have.lengthOf(2);
+                pipeline.upstream.should.have.members(['builder', 'publisher']);
+                done();
+            });
+        });
+
+        it("should contain GIT in upstream list if pipeline depends on it", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("URL: some-git.com:some-project.git, Branch: master")
+                            .withType("Git")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
+                should.exist(pipeline);
+                pipeline.upstream.should.deep.equal(['GIT']);
+                done();
+            });
+        });
+
+        it("should not return GIT in upstream list if there are materials of type pipeline available", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("URL: some-git.com:some-project.git, Branch: master")
+                            .withType("Git")
+                        )
+                        .addMaterial(new MaterialBuilder()
+                            .withDescription("Build")
                             .withType("Pipeline")
                         )
                     )
@@ -128,7 +173,7 @@ describe('GoCD Client', function() {
 
             gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
                 should.exist(pipeline);
-                pipeline.upstream.should.have.members(['builder', 'publisher']);
+                pipeline.upstream.should.deep.equal(['Build']);
                 done();
             });
         });

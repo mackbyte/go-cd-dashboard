@@ -16,18 +16,41 @@ Graph.prototype.getLinks = function(id) {
     }
 };
 
-
-Graph.prototype.addNode = function(id, data, links) {
-    var graph = this;
+function createNodesThatDontExist(graph, links) {
     links.forEach(function(link) {
         if(!graph.nodes.hasOwnProperty(link)) {
-            graph.addNode(link, {}, []);
+            graph.addNode(link, {});
         }
     });
+}
 
-    this.nodes[id] = {
-        data: data,
-        links: links
+Graph.prototype.addLinks = function(id, links) {
+    if(this.nodes.hasOwnProperty(id)) {
+        createNodesThatDontExist(this, links);
+        var node = this.nodes[id];
+        links.forEach(function(link) {
+            if(node.links.indexOf(link) < 0) {
+               node.links.push(link);
+            }
+        })
+    }
+};
+
+Graph.prototype.addNode = function(id, data, links) {
+    if(links) {
+        createNodesThatDontExist(this, links);
+    }
+
+    if(this.nodes[id]) {
+        this.nodes[id] = {
+            data: data,
+            links: links || this.nodes[id].links
+        }
+    } else {
+        this.nodes[id] = {
+            data: data,
+            links: links || []
+        }
     }
 };
 
@@ -41,6 +64,25 @@ Graph.prototype.removeNode = function(id) {
     }
 
     delete this.nodes[id];
+};
+
+Graph.prototype.breadthFirstSearch = function(origin) {
+    var result = [origin];
+    var queue = [origin];
+    while(queue.length > 0) {
+        this.nodes[queue.shift()].links.sort().forEach(function(link) {
+            if(result.indexOf(link) < 0) {
+                result.push(link);
+                queue.push(link);
+            }
+        });
+    }
+
+    return result;
+};
+
+Graph.prototype.size = function() {
+    return Object.keys(this.nodes).length;
 };
 
 module.exports = Graph;

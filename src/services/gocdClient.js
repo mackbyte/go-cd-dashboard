@@ -3,11 +3,21 @@ var request = require('request');
 var gocdClient = {};
 
 function getAllUpstreamPipelines(material_revisions) {
-    return material_revisions.filter(function(mat_rev) {
-        return mat_rev.material.type == "Pipeline";
+    var materials = material_revisions.filter(function(mat_rev) {
+        return mat_rev.material.type === "Pipeline" || mat_rev.material.type === "Git";
     }).map(function(mat_rev) {
-        return mat_rev.material.description;
-    })
+        if(mat_rev.material.type == "Pipeline") {
+            return mat_rev.material.description;
+        } else {
+            return "GIT"
+        }
+    });
+
+    if(materials.length > 1 && materials.indexOf("GIT") > -1) {
+        materials.splice(materials.indexOf("GIT"), 1);
+    }
+
+    return materials;
 }
 
 gocdClient.getPipelineStatus = function(pipeline, callback) {

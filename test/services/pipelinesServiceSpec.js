@@ -31,7 +31,7 @@ describe('Pipelines Service', function() {
             allPipelinesStub.yields({"Application": ["Build", "Test"]});
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Test")
@@ -55,11 +55,11 @@ describe('Pipelines Service', function() {
             allPipelinesStub.yields({"Application1": ["Build"], "Application2": ["Publish", "Deploy"]});
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Deploy")
@@ -85,13 +85,13 @@ describe('Pipelines Service', function() {
             pipelines.Application2.Deploy.should.have.property("status", "Passed");
         });
 
-        it("should return order of pipeline as the order specified in the group", function() {
+        it("should return pipelines in order of breadth first search with GIT as source node", function() {
             allPipelinesStub
                 .yields({"Application": ["Build", "Publish", "Deploy"]});
 
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": []});
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Publish")
@@ -100,6 +100,111 @@ describe('Pipelines Service', function() {
             pipelineStatusStub
                 .withArgs("Deploy")
                 .yields({"status": "Passed", "build-number": 1, "upstream": ["Publish"]});
+
+            var pipelinesService = require('../../src/services/pipelinesService');
+
+            var pipelines = pipelinesService.getPipelines();
+            should.exist(pipelines);
+            pipelines.should.deep.equal({
+                "Application": {
+                    "Build": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 0
+                    },
+                    "Deploy": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 2
+                    },
+                    "Publish": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 1
+                    }
+                }
+            });
+        });
+
+        it("should not include GIT nodes", function() {
+            allPipelinesStub
+                .yields({"Application": ["Build"]});
+
+            pipelineStatusStub
+                .withArgs("Build")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+
+            var pipelinesService = require('../../src/services/pipelinesService');
+
+            var pipelines = pipelinesService.getPipelines();
+            should.exist(pipelines);
+            pipelines.should.deep.equal({
+                "Application": {
+                    "Build": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 0
+                    }
+                }
+            });
+        });
+
+        it("should return pipelines that have multiple GIT nodes for groups which are not connected", function() {
+            allPipelinesStub
+                .yields({"NFT-Suite": ["Hour", "Overnight", "Weekend"]});
+
+            pipelineStatusStub
+                .withArgs("Hour")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+
+            pipelineStatusStub
+                .withArgs("Overnight")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+
+            pipelineStatusStub
+                .withArgs("Weekend")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+
+            var pipelinesService = require('../../src/services/pipelinesService');
+
+            var pipelines = pipelinesService.getPipelines();
+            should.exist(pipelines);
+            pipelines.should.deep.equal({
+                "NFT-Suite": {
+                    "Hour": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 0
+                    },
+                    "Overnight": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 0
+                    },
+                    "Weekend": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 0
+                    }
+                }
+            });
+        });
+
+        it("should remove links to build when another link is available to produce correct order", function() {
+            allPipelinesStub
+                .yields({"Application": ["Build", "Publish", "Deploy"]});
+
+            pipelineStatusStub
+                .withArgs("Build")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+
+            pipelineStatusStub
+                .withArgs("Publish")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build"]});
+
+            pipelineStatusStub
+                .withArgs("Deploy")
+                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build", "Publish"]});
 
             var pipelinesService = require('../../src/services/pipelinesService');
 
