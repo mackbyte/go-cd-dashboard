@@ -1,0 +1,49 @@
+function all(promises) {
+    var results = [];
+    var promiseCount = promises.length;
+
+    return new Promise(function(resolve) {
+        promises.forEach(function(promise) {
+            promise.then(function(result) {
+                results.push(result);
+                if(results.length === promiseCount) {
+                    resolve(results);
+                }
+            });
+        });
+    });
+}
+
+function Promise(fn) {
+    var state = 'pending';
+    var value;
+    var deferred;
+
+    function resolve(newValue) {
+        value = newValue;
+        state = 'resolved';
+
+        if(deferred) {
+            handle(deferred);
+        }
+    }
+
+    function handle(onResolved) {
+        if(state === 'pending') {
+            deferred = onResolved;
+            return;
+        }
+
+        onResolved(value);
+    }
+
+    this.then = function(onResolved) {
+        handle(onResolved);
+    };
+
+    fn(resolve);
+}
+
+module.exports = {
+    all: all
+};

@@ -4,13 +4,12 @@ var gocdClient = require('./gocdClient'),
     pipelinesService = {};
 
 pipelinesService.update = function() {
-    gocdClient.getAllPipelines(function(pipelineGroups) {
-        if(pipelineGroups) {
+    gocdClient.getAllPipelines()
+        .then(function(pipelineGroups) {
             for (var groupName in pipelineGroups) {
                 updatePipelineGroup(groupName, pipelineGroups[groupName]);
             }
-        }
-    });
+        });
 };
 
 function initialiseGroup(groupName) {
@@ -21,22 +20,25 @@ function initialiseGroup(groupName) {
 
 function updatePipelineGroup(groupName, pipelineNames) {
     initialiseGroup(groupName);
-    pipelineNames.forEach(function(pipelineName) {
-        updatePipeline(pipelineName, groupName);
-    });
-}
 
-function updatePipeline(pipelineName, groupName) {
-    gocdClient.getPipelineStatus(pipelineName, function(state) {
-        insertPipeline(pipelinesState[groupName], pipelineName, state)
-    })
+    var pipelineRequests = pipelineNames.map(function(pipelineName) {
+        return gocdClient.getPipelineStatus(pipelineName);
+    });
+
+    Promise.all(pipelineRequests)
+        .then(function(values) {
+            // Get source node
+            values.forEach(function(value) {
+                insertPipeline(pipelinesState[groupName], value.name, value);
+            });
+        });
 }
 
 /*
-* Only use links to source node when there are no others available otherwise the extra links which
-* cause searching issues. This is because every pipeline has an upstream dependency of the build phase.
-* NOTE: Currently assumes no node links to multiple sources.
-*/
+ * Only use links to source node when there are no others available otherwise the extra links which
+ * cause searching issues. This is because every pipeline has an upstream dependency of the build phase.
+ * NOTE: Currently assumes no node links to multiple sources.
+ */
 function getActualUpstream(links, sources) {
     if(links.indexOf('GIT') < 0 && sources.length === 0) {return [];}
     if(links.length === 1) {return links;}

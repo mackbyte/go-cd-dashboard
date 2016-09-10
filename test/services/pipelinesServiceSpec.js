@@ -1,25 +1,30 @@
 var gocdClient = require('../../src/services/gocdClient'),
     should = require('chai').should(),
     sinon = require('sinon');
+    promiseMock = require('../utils/PromiseMock'),
+    require('sinon-stub-promise')(sinon);
 
 describe('Pipelines Service', function() {
     describe("Get Pipelines", function() {
         var pipelineStatusStub,
-            allPipelinesStub;
+            allPipelinesStub,
+            promiseStub;
 
-        beforeEach(function(){
+        beforeEach(function() {
             pipelineStatusStub = sinon.stub(gocdClient, 'getPipelineStatus');
             allPipelinesStub = sinon.stub(gocdClient, 'getAllPipelines');
+            promiseStub = sinon.stub(Promise, 'all', promiseMock.all);
         });
 
         afterEach(function() {
             gocdClient.getAllPipelines.restore();
             gocdClient.getPipelineStatus.restore();
+            Promise.all.restore();
             delete require.cache[require.resolve('../../src/services/pipelinesService')]
         });
 
         it("should default to empty object", function() {
-            allPipelinesStub.yields({});
+            allPipelinesStub.returnsPromise().resolves({});
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
@@ -28,14 +33,14 @@ describe('Pipelines Service', function() {
         });
 
         it("should get list of pipelines for single group with status and build number", function() {
-            allPipelinesStub.yields({"Application": ["Build", "Test"]});
+            allPipelinesStub.returnsPromise().resolves({"Application": ["Build", "Test"]});
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Test")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build"]});
+                .returnsPromise().resolves({"name": "Test", "status": "Passed", "build-number": 1, "upstream": ["Build"]});
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
@@ -52,18 +57,21 @@ describe('Pipelines Service', function() {
         });
 
         it("should get list of all pipelines for multiple groups with status", function() {
-            allPipelinesStub.yields({"Application1": ["Build"], "Application2": ["Publish", "Deploy"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Application1": ["Build"],
+                "Application2": ["Publish", "Deploy"]
+            });
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Deploy")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["Publish"]});
+                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": ["Publish"]});
 
             var pipelinesService = require('../../src/services/pipelinesService');
 
@@ -87,19 +95,19 @@ describe('Pipelines Service', function() {
 
         it("should return pipelines in order of breadth first search with GIT as source node", function() {
             allPipelinesStub
-                .yields({"Application": ["Build", "Publish", "Deploy"]});
+                .returnsPromise().resolves({"Application": ["Build", "Publish", "Deploy"]});
 
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build"]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": ["Build"]});
 
             pipelineStatusStub
                 .withArgs("Deploy")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["Publish"]});
+                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": ["Publish"]});
 
             var pipelinesService = require('../../src/services/pipelinesService');
 
@@ -128,11 +136,11 @@ describe('Pipelines Service', function() {
 
         it("should not include GIT nodes", function() {
             allPipelinesStub
-                .yields({"Application": ["Build"]});
+                .returnsPromise().resolves({"Application": ["Build"]});
 
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             var pipelinesService = require('../../src/services/pipelinesService');
 
@@ -151,19 +159,19 @@ describe('Pipelines Service', function() {
 
         it("should return pipelines that have multiple GIT nodes for groups which are not connected", function() {
             allPipelinesStub
-                .yields({"NFT-Suite": ["Hour", "Overnight", "Weekend"]});
+                .returnsPromise().resolves({"NFT-Suite": ["Hour", "Overnight", "Weekend"]});
 
             pipelineStatusStub
                 .withArgs("Hour")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Hour", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Overnight")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Overnight", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Weekend")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Weekend", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             var pipelinesService = require('../../src/services/pipelinesService');
 
@@ -192,23 +200,68 @@ describe('Pipelines Service', function() {
 
         it("should remove links to build when another link is available to produce correct order", function() {
             allPipelinesStub
-                .yields({"Application": ["Build", "Publish", "Deploy"]});
+                .returnsPromise().resolves({"Application": ["Build", "Publish", "Deploy"]});
 
             pipelineStatusStub
                 .withArgs("Build")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build"]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": ["Build"]});
 
             pipelineStatusStub
                 .withArgs("Deploy")
-                .yields({"status": "Passed", "build-number": 1, "upstream": ["Build", "Publish"]});
+                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": ["Build", "Publish"]});
 
             var pipelinesService = require('../../src/services/pipelinesService');
 
             var pipelines = pipelinesService.getPipelines();
+            should.exist(pipelines);
+            pipelines.should.deep.equal({
+                "Application": {
+                    "Build": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 0
+                    },
+                    "Deploy": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 2
+                    },
+                    "Publish": {
+                        "status": "Passed",
+                        "build-number": 1,
+                        "order": 1
+                    }
+                }
+            });
+        });
+
+        it("should wait until all pipeline status requests have completed before updating the graph", function() {
+            allPipelinesStub
+                .returnsPromise().resolves({"Application": ["Build", "Publish", "Deploy"]});
+
+            pipelineStatusStub
+                .withArgs("Build")
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": ["GIT"]});
+
+            pipelineStatusStub
+                .withArgs("Publish")
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": ["Build"]});
+
+            var deployStub = pipelineStatusStub
+                .withArgs("Deploy")
+                .returnsPromise();
+
+            var pipelinesService = require('../../src/services/pipelinesService');
+            var pipelines = pipelinesService.getPipelines();
+            pipelines.should.deep.equal({});
+
+            deployStub.resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": ["Build", "Publish"]});
+
+            pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({
                 "Application": {

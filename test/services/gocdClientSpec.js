@@ -24,21 +24,22 @@ describe('GoCD Client', function() {
         it('should return latest stage info for valid pipeline and stage', function(done) {
             mockPipelineHistory(200, new PipelineHistoryBuilder().build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.should.have.property('status', 'Passed');
-                pipeline.should.have.property('build-number', 1);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.should.have.property('status', 'Passed');
+                    pipeline.should.have.property('build-number', 1);
+                    done();
+                });
         });
 
-        it('should return null when request is not successful', function(done) {
-            mockPipelineHistory(400, null);
+        it('should reject request is not successful', function(done) {
+            mockPipelineHistory(400, {});
 
-            gocdClient.getPipelineStatus('mypipeline', function(stage) {
-                should.not.exist(stage);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .catch(function(error) {
+                    done();
+                });
         });
 
         it("should return status for failed pipelines", function(done) {
@@ -51,12 +52,13 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.should.have.property('status', 'Failed');
-                pipeline.should.have.property('build-number', 1);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.should.have.property('status', 'Failed');
+                    pipeline.should.have.property('build-number', 1);
+                    done();
+                });
         });
 
         it("should return list of upstream pipelines if available", function(done) {
@@ -69,11 +71,12 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.upstream.should.deep.equal(['pre-build']);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.deep.equal(['pre-build']);
+                    done();
+                });
         });
 
         it("should return empty list of upstream pipelines if not available", function(done) {
@@ -82,11 +85,12 @@ describe('GoCD Client', function() {
                     .withPipeline(new PipelineBuilder())
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.upstream.should.be.empty;
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.be.empty;
+                    done();
+                });
         });
 
         it("should return empty list of upstream pipelines if material type is not Pipeline or Git", function(done) {
@@ -100,11 +104,12 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.upstream.should.be.empty;
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.be.empty;
+                    done();
+                });
         });
 
         it("should return all upstream pipelines that have material type of Pipeline", function(done) {
@@ -130,12 +135,13 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.upstream.should.have.lengthOf(2);
-                pipeline.upstream.should.have.members(['builder', 'publisher']);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.have.lengthOf(2);
+                    pipeline.upstream.should.have.members(['builder', 'publisher']);
+                    done();
+                });
         });
 
         it("should contain GIT in upstream list if pipeline depends on it", function(done) {
@@ -149,11 +155,12 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.upstream.should.deep.equal(['GIT']);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.deep.equal(['GIT']);
+                    done();
+                });
         });
 
         it("should not return GIT in upstream list if there are materials of type pipeline available", function(done) {
@@ -171,11 +178,12 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline', function(pipeline) {
-                should.exist(pipeline);
-                pipeline.upstream.should.deep.equal(['Build']);
-                done();
-            });
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.deep.equal(['Build']);
+                    done();
+                });
         });
     });
 
@@ -198,11 +206,12 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getAllPipelines(function(stages) {
-                should.exist(stages);
-                stages.should.eql({"Application": ["Dev"]});
-                done()
-            });
+            gocdClient.getAllPipelines()
+                .then(function(pipelines) {
+                    should.exist(pipelines);
+                    pipelines.should.eql({"Application": ["Dev"]});
+                    done()
+                });
         });
 
         it("should return pipeline group with one pipeline for pipeline with multiple stages", function(done) {
@@ -221,13 +230,14 @@ describe('GoCD Client', function() {
                     .build()
             );
 
-            gocdClient.getAllPipelines(function(stages) {
-                should.exist(stages);
-                stages.should.eql({"Application": ["Dev"]});
-                done()
-            });
+            gocdClient.getAllPipelines()
+                .then(function(pipelines) {
+                    should.exist(pipelines);
+                    pipelines.should.eql({"Application": ["Dev"]});
+                    done()
+                });
         });
-        
+
         it("should return pipeline group with multiple pipelines for group with multiple pipelines", function(done) {
             mockPipelineGroups(200,
                 new PipelineGroupsBuilder()
@@ -249,14 +259,15 @@ describe('GoCD Client', function() {
                     .build()
             );
 
-            gocdClient.getAllPipelines(function(stages) {
-                should.exist(stages);
-                stages.should.eql({
-                    "Restler": ["Build", "Test"],
-                    "Ingester": ["Publish"]
+            gocdClient.getAllPipelines()
+                .then(function(pipelines) {
+                    should.exist(pipelines);
+                    pipelines.should.eql({
+                        "Restler": ["Build", "Test"],
+                        "Ingester": ["Publish"]
+                    });
+                    done()
                 });
-                done()
-            });
         });
 
         it("should return all pipeline groups with pipelines", function(done) {
@@ -283,14 +294,15 @@ describe('GoCD Client', function() {
                     .build()
             );
 
-            gocdClient.getAllPipelines(function(stages) {
-                should.exist(stages);
-                stages.should.eql({
-                    "Restler": ["Build", "Test"],
-                    "Ingester": ["Compile", "Publish"]
+            gocdClient.getAllPipelines()
+                .then(function(pipelines) {
+                    should.exist(pipelines);
+                    pipelines.should.eql({
+                        "Restler": ["Build", "Test"],
+                        "Ingester": ["Compile", "Publish"]
+                    });
+                    done()
                 });
-                done()
-            });
         })
     });
 });
