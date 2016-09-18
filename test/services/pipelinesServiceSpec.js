@@ -46,14 +46,41 @@ describe('Pipelines Service', function() {
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
 
-            pipelines.should.have.property("Application");
-            pipelines.Application.should.have.property("Build");
-            pipelines.Application.Build.should.have.property("build-number", 1);
-            pipelines.Application.Build.should.have.property("status", "Passed");
-
-            pipelines.Application.should.have.property("Test");
-            pipelines.Application.Test.should.have.property("build-number", 1);
-            pipelines.Application.Test.should.have.property("status", "Passed");
+            pipelines.should.deep.equal({
+                "Application": {
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed",
+                                },
+                                "links": [
+                                    "Test"
+                                ]
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            },
+                            "Test": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Test",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            }
+                        },
+                        "source": "GIT"
+                    }
+                }
+            });
         });
 
         it("should get list of all pipelines for multiple groups with status", function() {
@@ -78,19 +105,64 @@ describe('Pipelines Service', function() {
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
 
-            pipelines.should.have.property("Application1");
-            pipelines.Application1.should.have.property("Build");
-            pipelines.Application1.Build.should.have.property("build-number", 1);
-            pipelines.Application1.Build.should.have.property("status", "Passed");
-
-            pipelines.should.have.property("Application2");
-            pipelines.Application2.should.have.property("Publish");
-            pipelines.Application2.Publish.should.have.property("build-number", 1);
-            pipelines.Application2.Publish.should.have.property("status", "Passed");
-
-            pipelines.Application2.should.have.property("Deploy");
-            pipelines.Application2.Deploy.should.have.property("build-number", 1);
-            pipelines.Application2.Deploy.should.have.property("status", "Passed");
+            pipelines.should.deep.equal({
+                "Application1": {
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
+                    }
+                },
+                "Application2": {
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Deploy": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Deploy",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Publish"
+                                ]
+                            },
+                            "Publish": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Publish",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Deploy"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
+                    }
+                }
+            });
         });
 
         it("should return pipelines in order of breadth first search with git as source node", function() {
@@ -115,20 +187,46 @@ describe('Pipelines Service', function() {
             should.exist(pipelines);
             pipelines.should.deep.equal({
                 "Application": {
-                    "Build": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
-                    },
-                    "Deploy": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 2
-                    },
-                    "Publish": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 1
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Publish"
+                                ]
+                            },
+                            "Deploy": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Deploy",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            },
+                            "Publish": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Publish",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Deploy"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
                     }
                 }
             });
@@ -148,10 +246,26 @@ describe('Pipelines Service', function() {
             should.exist(pipelines);
             pipelines.should.deep.equal({
                 "Application": {
-                    "Build": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
                     }
                 }
             });
@@ -179,20 +293,44 @@ describe('Pipelines Service', function() {
             should.exist(pipelines);
             pipelines.should.deep.equal({
                 "NFT-Suite": {
-                    "Hour": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
-                    },
-                    "Overnight": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
-                    },
-                    "Weekend": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Hour",
+                                    "Overnight",
+                                    "Weekend"
+                                ]
+                            },
+                            "Hour": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Hour",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "Overnight": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Overnight",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "Weekend": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Weekend",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            }
+                        },
+                        "source": "GIT"
                     }
                 }
             });
@@ -220,20 +358,46 @@ describe('Pipelines Service', function() {
             should.exist(pipelines);
             pipelines.should.deep.equal({
                 "Application": {
-                    "Build": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
-                    },
-                    "Deploy": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 2
-                    },
-                    "Publish": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 1
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Publish"
+                                ]
+                            },
+                            "Deploy": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Deploy",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            },
+                            "Publish": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Publish",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Deploy"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
                     }
                 }
             });
@@ -265,63 +429,141 @@ describe('Pipelines Service', function() {
             should.exist(pipelines);
             pipelines.should.deep.equal({
                 "Application": {
-                    "Build": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 0
-                    },
-                    "Deploy": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 2
-                    },
-                    "Publish": {
-                        "status": "Passed",
-                        "build-number": 1,
-                        "order": 1
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Publish"
+                                ]
+                            },
+                            "Deploy": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Deploy",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            },
+                            "Publish": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Publish",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Deploy"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
                     }
                 }
             });
         });
 
-        // it("should return separate pipeline for each different git repo", function() {
-        //     allPipelinesStub
-        //         .returnsPromise().resolves({"Libraries": ["Common", "Common-Deploy", "Common-Test", "Common-Test-Deploy"]});
-        //
-        //     pipelineStatusStub
-        //         .withArgs("Common")
-        //         .returnsPromise().resolves({"name": "Common", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
-        //
-        //     pipelineStatusStub
-        //         .withArgs("Common-Deploy")
-        //         .returnsPromise().resolves({"name": "Common-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common"}]});
-        //
-        //     pipelineStatusStub
-        //         .withArgs("Common-Test")
-        //         .returnsPromise().resolves({"name": "Common-Test", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-other-project.git"}]});
-        //
-        //     pipelineStatusStub
-        //         .withArgs("Common-Test-Deploy")
-        //         .returnsPromise().resolves({"name": "Common-Test-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common-Test"}]});
-        //
-        //     var pipelinesService = require('../../src/services/pipelinesService');
-        //
-        //     var pipelines = pipelinesService.getPipelines();
-        //     should.exist(pipelines);
-        //     pipelines.should.deep.equal({
-        //         "Libraries": {
-        //             "Common": {
-        //                 "status": "Passed",
-        //                 "build-number": 1,
-        //                 "order": 0
-        //             },
-        //             "Common-Test": {
-        //                 "status": "Passed",
-        //                 "build-number": 1,
-        //                 "order": 1
-        //             }
-        //         }
-        //     });
-        // });
+        it("should return separate pipeline for each different git repo", function() {
+            allPipelinesStub
+                .returnsPromise().resolves({"Libraries": ["Common", "Common-Deploy", "Common-Test", "Common-Test-Deploy"]});
+
+            pipelineStatusStub
+                .withArgs("Common")
+                .returnsPromise().resolves({"name": "Common", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+
+            pipelineStatusStub
+                .withArgs("Common-Deploy")
+                .returnsPromise().resolves({"name": "Common-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common"}]});
+
+            pipelineStatusStub
+                .withArgs("Common-Test")
+                .returnsPromise().resolves({"name": "Common-Test", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-other-project.git"}]});
+
+            pipelineStatusStub
+                .withArgs("Common-Test-Deploy")
+                .returnsPromise().resolves({"name": "Common-Test-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common-Test"}]});
+
+            var pipelinesService = require('../../src/services/pipelinesService');
+
+            var pipelines = pipelinesService.getPipelines();
+            should.exist(pipelines);
+            pipelines.should.deep.equal({
+                "Libraries": {
+                    "git.com:some-other-project.git": {
+                        "nodes": {
+                            "Common-Test": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Common-Test",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Common-Test-Deploy"
+                                ]
+                            },
+                            "Common-Test-Deploy": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Common-Test-Deploy",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-other-project.git"
+                                },
+                                "links": [
+                                    "Common-Test"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
+                    },
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Common": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Common",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Common-Deploy"
+                                ]
+                            },
+                            "Common-Deploy": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Common-Deploy",
+                                    "status": "Passed"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Common"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
+                    }
+                }
+            });
+        });
     });
 });

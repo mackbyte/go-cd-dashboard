@@ -95,4 +95,16 @@ Graph.prototype.getSource = function() {
     return this.source;
 };
 
+Graph.prototype.toJson = function() {
+    return {
+        nodes: JSON.parse(JSON.stringify(this.nodes)),
+        source: this.source
+    }
+};
+
+Graph.prototype.fromJson = function(graph) {
+    this.nodes = JSON.parse(JSON.stringify(graph.nodes));
+    this.source = graph.source;
+};
+
 module.exports = Graph;

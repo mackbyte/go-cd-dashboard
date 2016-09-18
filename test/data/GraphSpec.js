@@ -298,4 +298,76 @@ describe("Graph", function() {
             should.not.exist(graph.getSource());
         });
     });
+
+    describe("toJson", function() {
+        it("should serialise graph data to json object", function() {
+            graph.addSourceNode("a", {name: "First", age: 23}, ["b", "c"]);
+            graph.addNode("b", {count: 7}, ["c"]);
+            graph.addNode("c", {}, []);
+
+            graph.toJson().should.deep.equal({
+                nodes: {
+                    "a": {
+                        data: {
+                            name: "First",
+                            age: 23
+                        },
+                        links: ["b", "c"]
+                    },
+                    "b": {
+                        data: {
+                            count: 7
+                        },
+                        links: ["c"]
+                    },
+                    "c": {
+                        data: {},
+                        links: []
+                    }
+                },
+                source: "a"
+            });
+        });
+
+        it("should default to an empty nodes object and undefined source", function() {
+            graph.toJson().should.deep.equal({nodes: {}, source: undefined})
+        });
+    });
+    
+    describe("fromJson", function() {
+        it("should be able to deserialise json to a graph", function() {
+            graph.fromJson({
+                nodes: {
+                    "a": {
+                        data: {
+                            name: "First",
+                            age: 23
+                        },
+                        links: ["b", "c"]
+                    },
+                    "b": {
+                        data: {
+                            count: 7
+                        },
+                        links: ["c"]
+                    },
+                    "c": {
+                        data: {},
+                        links: []
+                    }
+                },
+                source: "a"
+            });
+
+            graph.size().should.equal(3);
+            graph.breadthFirstSearch(graph.getSource()).should.deep.equal(["a", "b", "c"]);
+            graph.getNode("a").should.deep.equal({
+                data: {
+                    name: "First",
+                    age: 23
+                },
+                links: ["b", "c"]
+            });
+        })    
+    });
 });

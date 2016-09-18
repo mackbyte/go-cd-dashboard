@@ -1,6 +1,6 @@
 var gocdClient = require('./gocdClient'),
     Graph = require('../data/Graph'),
-    pipelinesState = {},
+    pipelinesState = new Map(),
     pipelinesService = {};
 
 pipelinesService.update = function() {
@@ -33,11 +33,23 @@ function getUniqueGitSources(pipelines) {
     })
 }
 
-function getPipelineGraph(name) {
-    if(!pipelinesState[name]) {
-        pipelinesState[name] = new Graph();
+function getPipelineGraph(groupName, pipelineName) {
+    if(pipelinesState.has(groupName)) {
+        let pipelineGroup = pipelinesState.get(groupName);
+        if(pipelineGroup.has(pipelineName)) {
+            return pipelineGroup.get(pipelineName);
+        } else {
+            let pipelineGraph = new Graph();
+            pipelineGroup.set(pipelineName, pipelineGraph);
+            return pipelineGraph;
+        }
+    } else {
+        let pipelineGraph = new Graph();
+        let pipeline = new Map();
+        pipeline.set(pipelineName, pipelineGraph);
+        pipelinesState.set(groupName, pipeline);
+        return pipelineGraph;
     }
-    return pipelinesState[name];
 }
 
 // Must remove unneeded links to build stage (stage after git)
@@ -67,13 +79,21 @@ function getLinksForNode(links, node) {
     });
 }
 
+function getPipelineData(pipeline) {
+    return {
+        "build-number": pipeline["build-number"],
+        "name": pipeline.name,
+        "status": pipeline.status
+    };
+}
+
 function addPipelineToGraph(graph, pipelines, allLinks, name) {
     let pipeline = pipelines.filter(pl => {
         return pl.name === name;
     })[0];
 
     let pipelineLinks = getLinksForNode(allLinks, name);
-    graph.addNode(pipeline.name, pipeline, pipelineLinks);
+    graph.addNode(pipeline.name, getPipelineData(pipeline), pipelineLinks);
     pipelineLinks.forEach(link => {
         addPipelineToGraph(graph, pipelines, allLinks, link);
     });
@@ -101,7 +121,7 @@ function updatePipelineGroup(groupName, pipelineNames) {
             let allLinks = getInvertedLinks(pipelines, sourceLinks);
 
             sources.forEach(source => {
-                let pipelineGraph = getPipelineGraph(groupName);
+                let pipelineGraph = getPipelineGraph(groupName, source.url);
                 pipelineGraph.addSourceNode("GIT", {url: source.url}, source.links);
                 source.links.forEach(link => {
                     addPipelineToGraph(pipelineGraph, pipelines, allLinks, link);
@@ -110,32 +130,16 @@ function updatePipelineGroup(groupName, pipelineNames) {
         });
 }
 
-function getPipelineSourceNodes(pipelineGraph) {
-    if(pipelineGraph.nodes.hasOwnProperty("GIT")) {
-        return pipelineGraph.nodes.GIT.links;
-    }
-    return [];
-}
-
 pipelinesService.getPipelines = function() {
-    var pipelines = {};
-    for (var groupName in pipelinesState) {
-        var pipelineGraph = pipelinesState[groupName];
-        var sources = getPipelineSourceNodes(pipelineGraph);
-        sources.forEach(function(source) {
-            var result = pipelineGraph.breadthFirstSearch(source);
-            pipelines[groupName] = pipelines[groupName] || {};
-            result.forEach(function(node, index) {
-                var pipeline = pipelineGraph.getNode(node);
-                pipelines[groupName][node] = {
-                    "order": index,
-                    "build-number": pipeline.data["build-number"],
-                    "status": pipeline.data.status
-                };
-            });
-        });
+    let result = {};
+
+    for(let [group, pipelines] of pipelinesState) {
+        result[group] = {};
+        for(let [name, graph] of pipelines) {
+            result[group][name] = graph.toJson();
+        }
     }
-    return pipelines;
+    return result;
 };
 
 pipelinesService.update();
