@@ -1,5 +1,6 @@
 var Graph = function() {
     this.nodes = {};
+    this.source = undefined;
 };
 
 Graph.prototype.getNodes = function() {
@@ -83,6 +84,15 @@ Graph.prototype.breadthFirstSearch = function(origin) {
 
 Graph.prototype.size = function() {
     return Object.keys(this.nodes).length;
+};
+
+Graph.prototype.addSourceNode = function(id, data, links) {
+    this.addNode(id, data, links);
+    this.source = id;
+};
+
+Graph.prototype.getSource = function() {
+    return this.source;
 };
 
 module.exports = Graph;

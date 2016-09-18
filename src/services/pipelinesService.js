@@ -12,51 +12,102 @@ pipelinesService.update = function() {
         });
 };
 
-function initialiseGroup(groupName) {
-    if(!pipelinesState[groupName]) {
-        pipelinesState[groupName] = new Graph();
+function getUniqueGitSources(pipelines) {
+    let uniqueGitSourceNodes = {};
+    pipelines.forEach(pipeline => {
+        pipeline.upstream.forEach(dependency => {
+            if(dependency.type === 'git') {
+                if(uniqueGitSourceNodes.hasOwnProperty(dependency.name)) {
+                    uniqueGitSourceNodes[dependency.name].links.push(pipeline.name);
+                } else {
+                    uniqueGitSourceNodes[dependency.name] = {
+                        links: [pipeline.name]
+                    }
+                }
+            }
+        });
+    });
+
+    return Object.keys(uniqueGitSourceNodes).map(gitUrl => {
+        return {url: gitUrl, links: uniqueGitSourceNodes[gitUrl].links}
+    })
+}
+
+function getPipelineGraph(name) {
+    if(!pipelinesState[name]) {
+        pipelinesState[name] = new Graph();
     }
+    return pipelinesState[name];
+}
+
+// Must remove unneeded links to build stage (stage after git)
+function getInvertedLinks(pipelines, sourceLinks) {
+    let links = [];
+    pipelines.forEach(pipeline => {
+        if(pipeline.upstream.length > 1) {
+            pipeline.upstream.forEach(upstreamLink => {
+                if(sourceLinks.indexOf(upstreamLink.name) < 0) {
+                    links.push({from: upstreamLink.name, to: pipeline.name});
+                }
+            });
+        } else {
+            pipeline.upstream.forEach(upstreamLink => {
+                links.push({from: upstreamLink.name, to: pipeline.name});
+            })
+        }
+    });
+    return links;
+}
+
+function getLinksForNode(links, node) {
+    return links.filter(link => {
+        return link.from === node;
+    }).map(nodeLink => {
+        return nodeLink.to;
+    });
+}
+
+function addPipelineToGraph(graph, pipelines, allLinks, name) {
+    let pipeline = pipelines.filter(pl => {
+        return pl.name === name;
+    })[0];
+
+    let pipelineLinks = getLinksForNode(allLinks, name);
+    graph.addNode(pipeline.name, pipeline, pipelineLinks);
+    pipelineLinks.forEach(link => {
+        addPipelineToGraph(graph, pipelines, allLinks, link);
+    });
+}
+
+function getSourceLinks(sources) {
+    let sourceLinks = [];
+    sources.forEach(source => {
+        source.links.forEach(link => {
+            sourceLinks.push(link);
+        })
+    });
+    return sourceLinks;
 }
 
 function updatePipelineGroup(groupName, pipelineNames) {
-    initialiseGroup(groupName);
-
-    var pipelineRequests = pipelineNames.map(function(pipelineName) {
+    let pipelineRequests = pipelineNames.map(pipelineName => {
         return gocdClient.getPipelineStatus(pipelineName);
     });
 
     Promise.all(pipelineRequests)
-        .then(function(values) {
-            // Get source node
-            values.forEach(function(value) {
-                insertPipeline(pipelinesState[groupName], value.name, value);
+        .then(pipelines => {
+            let sources = getUniqueGitSources(pipelines);
+            let sourceLinks = getSourceLinks(sources);
+            let allLinks = getInvertedLinks(pipelines, sourceLinks);
+
+            sources.forEach(source => {
+                let pipelineGraph = getPipelineGraph(groupName);
+                pipelineGraph.addSourceNode("GIT", {url: source.url}, source.links);
+                source.links.forEach(link => {
+                    addPipelineToGraph(pipelineGraph, pipelines, allLinks, link);
+                });
             });
         });
-}
-
-/*
- * Only use links to source node when there are no others available otherwise the extra links which
- * cause searching issues. This is because every pipeline has an upstream dependency of the build phase.
- * NOTE: Currently assumes no node links to multiple sources.
- */
-function getActualUpstream(links, sources) {
-    if(links.indexOf('GIT') < 0 && sources.length === 0) {return [];}
-    if(links.length === 1) {return links;}
-
-    return links.filter(function(link) {
-        return sources.indexOf(link) < 0
-    })
-}
-
-function insertPipeline(group, pipelineName, pipeline) {
-    group.addNode(pipelineName, pipeline);
-    var pipelineSourceNodes = getPipelineSourceNodes(group);
-    getActualUpstream(pipeline.upstream, pipelineSourceNodes).forEach(function(dependency) {
-        if(!group.getNode(dependency)) {
-            group.addNode(dependency, {})
-        }
-        group.addLinks(dependency, [pipelineName])
-    });
 }
 
 function getPipelineSourceNodes(pipelineGraph) {

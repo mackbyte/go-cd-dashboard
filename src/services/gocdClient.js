@@ -2,19 +2,27 @@ var request = require('request');
 
 var gocdClient = {};
 
+function getGitUrlFromDescription(description) {
+    const GIT_URL_REGEX = /URL: (.+\.git), Branch: .+/;
+    let match = GIT_URL_REGEX.exec(description);
+    return match ? match[1] : description;
+}
+
 function getAllUpstreamPipelines(material_revisions) {
-    var materials = material_revisions.filter(function(mat_rev) {
+    let materials = material_revisions.filter(function(mat_rev) {
         return mat_rev.material.type === "Pipeline" || mat_rev.material.type === "Git";
     }).map(function(mat_rev) {
         if(mat_rev.material.type == "Pipeline") {
-            return mat_rev.material.description;
+            return {type: "pipeline", name: mat_rev.material.description};
         } else {
-            return "GIT"
+            return {type: "git", name: getGitUrlFromDescription(mat_rev.material.description)}
         }
     });
 
-    if(materials.length > 1 && materials.indexOf("GIT") > -1) {
-        materials.splice(materials.indexOf("GIT"), 1);
+    if(materials.length > 1) {
+        materials = materials.filter(material => {
+            return material.type === "pipeline";
+        })
     }
 
     return materials;

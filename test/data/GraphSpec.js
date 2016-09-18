@@ -255,4 +255,47 @@ describe("Graph", function() {
             graph.size().should.equal(3);
         });
     });
+
+    describe("addSourceNode", function() {
+        it("should add source if node is not in graph", function() {
+            graph.addSourceNode("a", {});
+
+            graph.getSource().should.equal("a");
+            graph.getNode("a").should.deep.equal({
+                data: {},
+                links: []
+            })
+        });
+
+        it("should override previously set source", function() {
+            graph.addSourceNode("a", {});
+            graph.addSourceNode("b", {});
+
+            graph.getSource().should.equal("b");
+        });
+
+        it("should update source node if already exists", function() {
+            graph.addSourceNode("a", {});
+            graph.addSourceNode("a", {name: "test"}, ["b"]);
+
+            graph.getNode("a").should.deep.equal({
+                data: {
+                    name: "test"
+                },
+                links: ["b"]
+            });
+        });
+    });
+
+    describe("getSource", function() {
+        it("should return graph source", function() {
+            graph.addSourceNode("a", {});
+
+            graph.getSource().should.equal("a");
+        });
+
+        it("should default to undefined when no source set", function() {
+            should.not.exist(graph.getSource());
+        });
+    });
 });

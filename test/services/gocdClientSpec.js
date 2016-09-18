@@ -74,7 +74,9 @@ describe('GoCD Client', function() {
             gocdClient.getPipelineStatus('mypipeline')
                 .then(function(pipeline) {
                     should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal(['pre-build']);
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'pipeline', name: 'pre-build'}
+                    ]);
                     done();
                 });
         });
@@ -139,7 +141,10 @@ describe('GoCD Client', function() {
                 .then(function(pipeline) {
                     should.exist(pipeline);
                     pipeline.upstream.should.have.lengthOf(2);
-                    pipeline.upstream.should.have.members(['builder', 'publisher']);
+                    pipeline.upstream.should.have.deep.members([
+                        {type: 'pipeline', name: 'builder'},
+                        {type: 'pipeline', name: 'publisher'},
+                    ]);
                     done();
                 });
         });
@@ -158,7 +163,30 @@ describe('GoCD Client', function() {
             gocdClient.getPipelineStatus('mypipeline')
                 .then(function(pipeline) {
                     should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal(['GIT']);
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'git', name: 'some-git.com:some-project.git'},
+                    ]);
+                    done();
+                });
+        });
+
+        it("should return full description if git url cannot be extracted from it", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("https://github.com/some-team/some-project.git")
+                            .withType("Git")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'git', name: 'https://github.com/some-team/some-project.git'},
+                    ]);
                     done();
                 });
         });
@@ -181,7 +209,9 @@ describe('GoCD Client', function() {
             gocdClient.getPipelineStatus('mypipeline')
                 .then(function(pipeline) {
                     should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal(['Build']);
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'pipeline', name: 'Build'},
+                    ]);
                     done();
                 });
         });
