@@ -1,5 +1,54 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
+html, body, p {
+  margin:0;
+  padding:0;
+}
+
+.dashboard {
+  display:flex;
+  flex-direction: column;
+  background: #123C4A;
+  font-size: large;
+  color: white;
+  min-height: 100vh;
+}
+
+.pipeline-group {
+  display: flex;
+  flex: 1 auto;
+}
+
+.pipeline-group-name, .pipeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.pipeline-group-name {
+  flex: 0 auto;
+  min-width: 175px;
+  max-width: 175px;
+}
+
+.pipeline {
+  flex: 1 auto;
+  border-radius: 10px;
+  border: 2px solid #123C4A;
+}
+
+.pipeline-container {
+  display: flex;
+  flex: 1 auto;
+}
+
+.pipeline-success {
+  background: #29a329;
+}
+
+.pipeline-failed {
+  background: #C70A0E;
+}
+
+.pipeline-unknown {
+  background: #D9B32A;
 }
