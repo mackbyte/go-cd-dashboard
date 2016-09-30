@@ -14,7 +14,7 @@ const PipelineGroup = ({name, group}) => (
             return (
                 <div className="pipeline-container" key={index}>
                     {pipelines.map((pipelineName, index) =>
-                        <Pipeline key={index} pipeline={graph.getNode(pipelineName).data}/>
+                        <Pipeline key={index} pipeline={graph.getNode(pipelineName).data} groupName={name}/>
                     )}
                 </div>
             )}
