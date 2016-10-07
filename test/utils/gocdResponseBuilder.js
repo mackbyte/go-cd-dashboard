@@ -37,6 +37,11 @@ PipelineHistoryBuilder.prototype.withPipeline = function(pipeline) {
     return this;
 };
 
+PipelineHistoryBuilder.prototype.withNoPipelines = function() {
+    this.pipelines = [];
+    return this;
+};
+
 PipelineHistoryBuilder.prototype.build = function() {
     var pipelines = [];
     this.pipelines.forEach(function(pipeline) {

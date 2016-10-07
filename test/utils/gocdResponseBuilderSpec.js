@@ -140,7 +140,16 @@ describe('GoCD Response Builder', function() {
             };
 
             pipelineHistory.should.deep.equal(expected);
-        })
+        });
+
+        it("should be able to build empty pipeline history", function() {
+            var pipelineHistory = new PipelineHistoryBuilder().withNoPipelines().build();
+            var expected = {
+                "pipelines": []
+            };
+
+            pipelineHistory.should.deep.equal(expected);
+        });
     });
     
     describe("Pipeline Builder", function() {

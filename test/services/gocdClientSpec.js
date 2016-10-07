@@ -215,6 +215,21 @@ describe('GoCD Client', function() {
                     done();
                 });
         });
+
+        it("should return pipeline with unknown status and negative build number if no history exists", function(done) {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withNoPipelines()
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline')
+                .then(function(pipeline) {
+                    should.exist(pipeline);
+                    pipeline.should.have.property('status', 'Unknown');
+                    pipeline.should.have.property('build-number', -1);
+                    done();
+                });
+        });
     });
 
     describe("getAllPipelines", function() {

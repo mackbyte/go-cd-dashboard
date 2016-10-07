@@ -42,6 +42,13 @@ gocdClient.getPipelineStatus = function(pipeline) {
                             "build-number": pipelineResult.counter,
                             "upstream": getAllUpstreamPipelines(pipelineResult.build_cause.material_revisions)
                         });
+                    } else {
+                        resolve({
+                            "name": pipeline,
+                            "status": "Unknown",
+                            "build-number": -1,
+                            "upstream": []
+                        })
                     }
                 } else {
                     reject(error);
