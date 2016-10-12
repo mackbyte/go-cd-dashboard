@@ -1,5 +1,5 @@
 import React from 'react';
-import Graph from './Graph';
+import Graph from '../../../../src/data/Graph';
 import Pipeline from './Pipeline';
 
 const PipelineGroup = ({name, group}) => (

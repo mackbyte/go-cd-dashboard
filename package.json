@@ -5,6 +5,7 @@
   "scripts": {
     "start": "nf start -p 3000",
     "server": "API_PORT=3001 node ./bin/www",
+    "build": "node ./bin/www",
     "test": "./node_modules/mocha/bin/_mocha 'test/!(public)/**/*Spec.js'",
     "coverage": "istanbul cover --dir ./test/coverage --report json --print none --root src/ ./node_modules/mocha/bin/_mocha 'test/!(public)/**/*Spec.js' && istanbul report --root ./test/coverage --dir ./test/coverage html"
   },
