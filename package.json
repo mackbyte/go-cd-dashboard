@@ -7,7 +7,7 @@
     "server": "API_PORT=3001 node ./bin/www",
     "build": "node ./bin/www",
     "test": "./node_modules/mocha/bin/_mocha 'test/!(public)/**/*Spec.js'",
-    "coverage": "istanbul cover --dir ./test/coverage --report json --print none --root src/ ./node_modules/mocha/bin/_mocha 'test/!(public)/**/*Spec.js' && istanbul report --root ./test/coverage --dir ./test/coverage html"
+    "coverage": "istanbul cover --dir ./test/coverage --report json --print none --root src/ ./node_modules/mocha/bin/_mocha 'test/!(public)/**/*Spec.js' && cd src/public && npm run coverage && cd ../.. && istanbul report --root ./ --dir ./test/coverage html && open ./test/coverage/index.html"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
