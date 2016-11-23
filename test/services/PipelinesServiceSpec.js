@@ -1,16 +1,19 @@
-var gocdClient = require('../../src/services/gocdClient'),
+const gocdClient = require('../../src/services/gocdClient'),
     should = require('chai').should(),
-    sinon = require('sinon');
-    promiseMock = require('../utils/PromiseMock'),
+    sinon = require('sinon'),
+    promiseMock = require('../utils/PromiseMock');
     require('sinon-stub-promise')(sinon);
 
 describe('Pipelines Service', function() {
     describe("Get Pipelines", function() {
-        var pipelineStatusStub,
+        let pipelinesService,
+            pipelineStatusStub,
             allPipelinesStub,
             promiseStub;
 
         beforeEach(function() {
+            pipelinesService = require('../../src/services/PipelinesService')({on: function() {}});
+
             pipelineStatusStub = sinon.stub(gocdClient, 'getPipelineStatus');
             allPipelinesStub = sinon.stub(gocdClient, 'getAllPipelines');
             promiseStub = sinon.stub(Promise, 'all', promiseMock.all);
@@ -20,12 +23,11 @@ describe('Pipelines Service', function() {
             gocdClient.getAllPipelines.restore();
             gocdClient.getPipelineStatus.restore();
             Promise.all.restore();
-            delete require.cache[require.resolve('../../src/services/pipelinesService')]
         });
 
         it("should default to empty object", function() {
             allPipelinesStub.returnsPromise().resolves({});
-            var pipelinesService = require('../../src/services/pipelinesService');
+            pipelinesService.update();
 
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
@@ -41,8 +43,8 @@ describe('Pipelines Service', function() {
             pipelineStatusStub
                 .withArgs("Test")
                 .returnsPromise().resolves({"name": "Test", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}]});
-            var pipelinesService = require('../../src/services/pipelinesService');
 
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
 
@@ -100,8 +102,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Deploy")
                 .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Publish"}]});
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
 
@@ -181,8 +182,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Deploy")
                 .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Publish"}]});
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({
@@ -240,8 +240,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Build")
                 .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({
@@ -287,8 +286,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Weekend")
                 .returnsPromise().resolves({"name": "Weekend", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({
@@ -352,8 +350,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Deploy")
                 .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}, {type: "pipeline", name: "Publish"}]});
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({
@@ -419,8 +416,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Deploy")
                 .returnsPromise();
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-            var pipelines = pipelinesService.getPipelines();
+            pipelinesService.update();            var pipelines = pipelinesService.getPipelines();
             pipelines.should.deep.equal({});
 
             deployStub.resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}, {type: "pipeline", name: "Publish"}]});
@@ -494,8 +490,7 @@ describe('Pipelines Service', function() {
                 .withArgs("Common-Test-Deploy")
                 .returnsPromise().resolves({"name": "Common-Test-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common-Test"}]});
 
-            var pipelinesService = require('../../src/services/pipelinesService');
-
+            pipelinesService.update();
             var pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
             pipelines.should.deep.equal({

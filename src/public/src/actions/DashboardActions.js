@@ -1,11 +1,6 @@
-export const updateDashboards = () => dispatch => {
-    fetch('/api/pipelines', {accept: 'application/json'})
-        .then(response => response.json()
-            .then(data => {
-                dispatch({
-                    type: 'UPDATE_PIPELINES',
-                    pipelines: data
-                });
-            })
-        );
+export const updateDashboards = (pipelines) => dispatch => {
+    dispatch({
+        type: 'UPDATE_PIPELINES',
+        pipelines
+    });
 };

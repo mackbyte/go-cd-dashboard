@@ -1,10 +1,14 @@
-var express = require('express');
-var router = express.Router();
-var pipelinesService = require('../services/pipelinesService');
+module.exports = function(io){
+    const express = require('express'),
+          router = express.Router(),
+          pipelinesService = require('../services/PipelinesService')(io);
 
-/* GET pipelines. */
-router.get('/', function(req, res) {
-    res.json(pipelinesService.getPipelines());
-});
+    pipelinesService.update();
 
-module.exports = router;
+    /* GET pipelines. */
+    router.get('/', function(req, res) {
+        res.json(pipelinesService.getPipelines());
+    });
+
+    return router;
+};

@@ -2,10 +2,16 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { updateDashboards } from './../actions/DashboardActions';
 import PipelineGroup from './../components/PipelineGroup';
+import io from 'socket.io-client';
 
 class Dashboard extends React.Component {
     componentWillMount() {
-        this.props.dispatch(updateDashboards());
+        const self = this;
+        let socket = io('http://localhost:3000');
+
+        socket.on('update', function(pipelines) {
+            self.props.dispatch(updateDashboards(pipelines));
+        });
     }
 
     render() {
