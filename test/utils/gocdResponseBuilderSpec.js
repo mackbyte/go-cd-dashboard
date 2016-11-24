@@ -125,7 +125,7 @@ describe('GoCD Response Builder', function() {
                 "pipelines": [
                     {
                         "name": "Dev",
-                        "counter": 1,
+                        "label": 1,
                         "stages": [
                             {
                                 "name": "Build",
@@ -157,7 +157,7 @@ describe('GoCD Response Builder', function() {
             var pipeline = new PipelineBuilder().build();
             var expected = {
                 "name": "Dev",
-                "counter": 1,
+                "label": 1,
                 "stages": [
                     {
                         "name": "Build",
@@ -177,7 +177,7 @@ describe('GoCD Response Builder', function() {
                 .build();
             var expected = {
                 "name": "Dev",
-                "counter": 1,
+                "label": 1,
                 "stages": [
                     {
                         "name": "Build",
@@ -203,7 +203,7 @@ describe('GoCD Response Builder', function() {
                 .build();
             var expected = {
                 "name": "Dev",
-                "counter": 1,
+                "label": 1,
                 "stages": [
                     {
                         "name": "Other",
@@ -228,7 +228,7 @@ describe('GoCD Response Builder', function() {
                 .build();
             var expected = {
                 "name": "Dev",
-                "counter": 1,
+                "label": 1,
                 "stages": [
                     {
                         "name": "One",
@@ -248,10 +248,10 @@ describe('GoCD Response Builder', function() {
 
         it("should be able to set pipeline counter", function() {
             var pipeline = new PipelineBuilder()
-                .withCounter(5)
+                .withLabel(5)
                 .build();
 
-            pipeline.counter.should.equal(5);
+            pipeline.label.should.equal(5);
         });
         
         it("should be able to add materials", function() {

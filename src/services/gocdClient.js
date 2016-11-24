@@ -39,7 +39,7 @@ gocdClient.getPipelineStatus = function(pipeline) {
                         resolve({
                             "name": pipeline,
                             "status": lastStage.result,
-                            "build-number": pipelineResult.counter,
+                            "build-number": pipelineResult.label,
                             "upstream": getAllUpstreamPipelines(pipelineResult.build_cause.material_revisions)
                         });
                     } else {

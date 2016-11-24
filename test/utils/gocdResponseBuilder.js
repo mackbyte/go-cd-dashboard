@@ -15,7 +15,7 @@ StageBuilder.prototype.withResult = function(result) {
     return this;
 };
 
-StageBuilder.prototype.withCounter = function(counter) {
+StageBuilder.prototype.withLabel = function(counter) {
     this.counter = counter;
     return this;
 };
@@ -55,7 +55,7 @@ PipelineHistoryBuilder.prototype.build = function() {
 var PipelineBuilder = function() {
     this.name = "Dev";
     this.stages = [new StageBuilder()];
-    this.counter = 1;
+    this.label = 1;
     this.materials = [];
 };
 
@@ -64,8 +64,8 @@ PipelineBuilder.prototype.withName = function(name) {
     return this;
 };
 
-PipelineBuilder.prototype.withCounter = function(counter) {
-    this.counter = counter;
+PipelineBuilder.prototype.withLabel = function(label) {
+    this.label = label;
     return this;
 };
 
@@ -104,7 +104,7 @@ PipelineBuilder.prototype.build = function() {
     return {
         name: pipeline.name,
         stages: stages,
-        counter: pipeline.counter,
+        label: pipeline.label,
         build_cause: {
             material_revisions: materials
         }
