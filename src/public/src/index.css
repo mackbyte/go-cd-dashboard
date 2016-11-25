@@ -7,7 +7,7 @@ html, body, p {
   display:flex;
   flex-direction: column;
   background: #123C4A;
-  font-size: xx-large;
+  font-size: x-large;
   font-family: Geneva, Arial, Helvetica, sans-serif;
   color: white;
   min-height: 100vh;
