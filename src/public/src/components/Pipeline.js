@@ -1,4 +1,5 @@
 import React from 'react';
+import { splitOnDashes } from '../util/NameFormatting';
 
 const getStatusClass = (status) => {
     if(status === 'Passed') {
@@ -21,7 +22,7 @@ const stripGroupName = (group, fullPipelineName) => {
 
 const Pipeline = ({pipeline, groupName}) => (
     <div className={getClass(pipeline.status)}>
-        <p>{stripGroupName(groupName, pipeline.name)}</p>
+        <p>{splitOnDashes(stripGroupName(groupName, pipeline.name))}</p>
         <p>{pipeline["build-number"]}</p>
     </div>
 );

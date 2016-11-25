@@ -1,11 +1,12 @@
 import React from 'react';
 import Graph from '../../../../src/data/Graph';
 import Pipeline from './Pipeline';
+import { splitOnDashes } from '../util/NameFormatting';
 
 const PipelineGroup = ({name, group}) => (
     <div className="pipeline-group">
         <div className="pipeline-group-name">
-            {name}
+            {splitOnDashes(name)}
         </div>
         {Object.keys(group).map((source, index) => {
             const graph = new Graph();
