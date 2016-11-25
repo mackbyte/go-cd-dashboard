@@ -21,7 +21,8 @@ const stripGroupName = (group, fullPipelineName) => {
 
 const Pipeline = ({pipeline, groupName}) => (
     <div className={getClass(pipeline.status)}>
-        <p>{stripGroupName(groupName, pipeline.name)}{" "}{pipeline["build-number"]}</p>
+        <p>{stripGroupName(groupName, pipeline.name)}</p>
+        <p>{pipeline["build-number"]}</p>
     </div>
 );
 

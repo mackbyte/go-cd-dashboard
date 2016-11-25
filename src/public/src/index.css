@@ -7,7 +7,8 @@ html, body, p {
   display:flex;
   flex-direction: column;
   background: #123C4A;
-  font-size: large;
+  font-size: xx-large;
+  font-family: Geneva, Arial, Helvetica, sans-serif;
   color: white;
   min-height: 100vh;
 }
@@ -32,6 +33,7 @@ html, body, p {
 
 .pipeline {
   flex: 1 auto;
+  flex-direction: column;
   border-radius: 10px;
   border: 2px solid #123C4A;
 }
@@ -42,11 +44,11 @@ html, body, p {
 }
 
 .pipeline-success {
-  background: #29a329;
+  background: #0a840a;
 }
 
 .pipeline-failed {
-  background: #C70A0E;
+  background: #9c0f12;
 }
 
 .pipeline-unknown {
