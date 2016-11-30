@@ -4,6 +4,8 @@ import { updateDashboards } from './../actions/DashboardActions';
 import PipelineGroup from './../components/PipelineGroup';
 import io from 'socket.io-client';
 import config from '../config/config';
+import $ from 'jquery';
+import '../util/Snowfall';
 
 class Dashboard extends React.Component {
     componentWillMount() {
@@ -28,6 +30,24 @@ class Dashboard extends React.Component {
                 )}
             </div>
         )
+    }
+
+    componentDidMount() {
+        $('.dashboard').snowfall({
+            flakeCount : 70,
+            flakeColor : '#ffffff',
+            flakePosition: 'absolute',
+            flakeIndex: 999999,
+            minSize : 5,
+            maxSize : 10,
+            minSpeed : 1,
+            maxSpeed : 5,
+            round : true,
+            shadow : false,
+            collection : false,
+            collectionHeight : 40,
+            deviceorientation : false
+        });
     }
 }
 
