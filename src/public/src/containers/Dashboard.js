@@ -34,16 +34,16 @@ class Dashboard extends React.Component {
 
     componentDidMount() {
         $('.dashboard').snowfall({
-            flakeCount : 70,
+            flakeCount : 100,
             flakeColor : '#ffffff',
             flakePosition: 'absolute',
             flakeIndex: 999999,
-            minSize : 5,
-            maxSize : 10,
+            minSize : 10,
+            maxSize : 20,
             minSpeed : 1,
-            maxSpeed : 5,
+            maxSpeed : 2,
             round : true,
-            shadow : false,
+            shadow : true,
             collection : false,
             collectionHeight : 40,
             deviceorientation : false
