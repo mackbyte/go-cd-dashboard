@@ -32,7 +32,7 @@ html, body, p {
 }
 
 .pipeline {
-  flex: 1 auto;
+  flex: 1;
   flex-direction: column;
   border-radius: 10px;
   border: 2px solid #123C4A;
