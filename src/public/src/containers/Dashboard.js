@@ -17,6 +17,10 @@ class Dashboard extends React.Component {
         });
     }
 
+    pipelinesInGroup(pipelines, groupName) {
+        return Object.keys(pipelines[groupName][Object.keys(pipelines[groupName])[0]].nodes).length
+    }
+
     render() {
         const { pipelines } = this.props;
         const { visible_groups } = config;
@@ -25,6 +29,7 @@ class Dashboard extends React.Component {
             <div className="dashboard">
                 {Object.keys(pipelines)
                     .filter(groupName => visible_groups.indexOf(groupName) > -1)
+                    .sort((a, b) => this.pipelinesInGroup(pipelines, b) - this.pipelinesInGroup(pipelines, a))
                     .map((groupName, index) =>
                     <PipelineGroup key={index} name={groupName} group={pipelines[groupName]}/>
                 )}
