@@ -10,7 +10,7 @@ import '../util/Snowfall';
 class Dashboard extends React.Component {
     componentWillMount() {
         const self = this;
-        let socket = io('http://localhost:3000');
+        let socket = io.connect();
 
         socket.on('update', function(pipelines) {
             self.props.dispatch(updateDashboards(pipelines));
