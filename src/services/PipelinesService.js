@@ -1,5 +1,5 @@
 module.exports = function(io) {
-    const gocdClient = require('./gocdClient'),
+    const gocdClient = require('./GocdClient'),
         Graph = require('../data/Graph'),
         pipelinesState = new Map(),
         pipelinesService = {};

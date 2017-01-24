@@ -1,4 +1,4 @@
-const gocdClient = require('../../src/services/gocdClient'),
+const gocdClient = require('../../src/services/GocdClient'),
     should = require('chai').should(),
     sinon = require('sinon'),
     promiseMock = require('../utils/PromiseMock');

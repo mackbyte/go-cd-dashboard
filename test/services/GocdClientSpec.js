@@ -1,5 +1,5 @@
-var gocdClient = require('../../src/services/gocdClient'),
-    gocdResponseBuilder = require('../utils/gocdResponseBuilder'),
+var gocdClient = require('../../src/services/GocdClient'),
+    gocdResponseBuilder = require('../utils/GocdResponseBuilder'),
     StageBuilder = gocdResponseBuilder.StageBuilder,
     PipelineBuilder = gocdResponseBuilder.PipelineBuilder,
     PipelineHistoryBuilder = gocdResponseBuilder.PipelineHistoryBuilder,
