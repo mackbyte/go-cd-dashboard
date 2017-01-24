@@ -7,7 +7,8 @@ const config = {
         "notify",
         "ottcs-rest",
         "sky-media-client",
-        "title-service-v1"
+        "title-service-v1",
+        "Infrastructure"
     ]
 };
 
