@@ -9,7 +9,8 @@ const config = {
         "sky-media-client",
         "title-service-v1",
         "Infrastructure"
-    ]
+    ],
+    snow_enabled: false
 };
 
 export default config;
