@@ -22,7 +22,7 @@ module.exports = function(io) {
 
         return Object.keys(uniqueGitSourceNodes).map(gitUrl => {
             return {url: gitUrl, links: uniqueGitSourceNodes[gitUrl].links}
-        })
+        });
     }
 
     function getPipelineGraph(groupName, pipelineName) {
@@ -44,19 +44,34 @@ module.exports = function(io) {
         }
     }
 
+    function getRpmPromotionPipeline(pipelines) {
+        return pipelines.filter(pipeline => pipeline.name.endsWith('-rpmpromotion'))
+                .map(pipeline => pipeline.name)[0];
+    }
+
     // Must remove unneeded links to build stage (stage after git)
     function getInvertedLinks(pipelines, sourceLinks) {
-        let links = [];
+        let links = [],
+            rpmPromotionPipeline = getRpmPromotionPipeline(pipelines);
+
         pipelines.forEach(pipeline => {
             if(pipeline.upstream.length > 1) {
                 pipeline.upstream.forEach(upstreamLink => {
                     if(sourceLinks.indexOf(upstreamLink.name) < 0) {
-                        links.push({from: upstreamLink.name, to: pipeline.name});
+                        if(upstreamLink.type === 'package') {
+                            links.push({from: rpmPromotionPipeline, to: pipeline.name});
+                        } else {
+                            links.push({from: upstreamLink.name, to: pipeline.name});
+                        }
                     }
                 });
             } else {
                 pipeline.upstream.forEach(upstreamLink => {
-                    links.push({from: upstreamLink.name, to: pipeline.name});
+                    if(upstreamLink.type === 'package') {
+                        links.push({from: rpmPromotionPipeline, to: pipeline.name});
+                    } else {
+                        links.push({from: upstreamLink.name, to: pipeline.name});
+                    }
                 })
             }
         });
@@ -125,7 +140,7 @@ module.exports = function(io) {
     pipelinesService.update = function() {
         gocdClient.getAllPipelines()
             .then(function(pipelineGroups) {
-                for (var groupName in pipelineGroups) {
+                for (let groupName in pipelineGroups) {
                     updatePipelineGroup(groupName, pipelineGroups[groupName]);
                 }
             });

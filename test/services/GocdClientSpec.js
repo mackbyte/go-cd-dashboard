@@ -1,13 +1,8 @@
-var gocdClient = require('../../src/services/GocdClient'),
-    gocdResponseBuilder = require('../utils/GocdResponseBuilder'),
-    StageBuilder = gocdResponseBuilder.StageBuilder,
-    PipelineBuilder = gocdResponseBuilder.PipelineBuilder,
-    PipelineHistoryBuilder = gocdResponseBuilder.PipelineHistoryBuilder,
-    PipelineGroupBuilder = gocdResponseBuilder.PipelineGroupBuilder,
-    PipelineGroupsBuilder = gocdResponseBuilder.PipelineGroupsBuilder,
-    MaterialBuilder = gocdResponseBuilder.MaterialBuilder,
-    nock = require('nock'),
-    should = require('chai').should();
+const gocdClient = require('../../src/services/GocdClient'),
+      gocdResponseBuilder = require('../utils/GocdResponseBuilder'),
+      { StageBuilder, PipelineBuilder, PipelineHistoryBuilder, PipelineGroupBuilder, PipelineGroupsBuilder, MaterialBuilder } = gocdResponseBuilder,
+      nock = require('nock'),
+      should = require('chai').should();
 
 describe('GoCD Client', function() {
     afterEach(function() {
@@ -33,7 +28,7 @@ describe('GoCD Client', function() {
                 });
         });
 
-        it('should reject request is not successful', function(done) {
+        it('should reject request if not successful', function(done) {
             mockPipelineHistory(400, {});
 
             gocdClient.getPipelineStatus('mypipeline')
@@ -95,7 +90,7 @@ describe('GoCD Client', function() {
                 });
         });
 
-        it("should return empty list of upstream pipelines if material type is not Pipeline or Git", function(done) {
+        it("should return empty list of upstream pipelines if material type is not Pipeline, Git or Package", function(done) {
             mockPipelineHistory(200,
                 new PipelineHistoryBuilder()
                     .withPipeline(new PipelineBuilder()
@@ -211,6 +206,27 @@ describe('GoCD Client', function() {
                     should.exist(pipeline);
                     pipeline.upstream.should.deep.equal([
                         {type: 'pipeline', name: 'Build'},
+                    ]);
+                    done();
+                });
+        });
+
+        it("should return Package materials if available", (done) => {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withMaterial(new MaterialBuilder()
+                            .withDescription("Repository: [repo_url=http://my-rpm-repo.com/releases/my-app/] - Package: [package_spec=my-app.*]")
+                            .withType("Package")
+                        )
+                    )
+                    .build());
+
+            gocdClient.getPipelineStatus('mypipeline')
+                .then((pipeline) => {
+                    should.exist(pipeline);
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'package', name: 'http://my-rpm-repo.com/releases/my-app/'},
                     ]);
                     done();
                 });

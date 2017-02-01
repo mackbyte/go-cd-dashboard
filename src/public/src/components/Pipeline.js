@@ -20,10 +20,19 @@ const stripGroupName = (group, fullPipelineName) => {
     return fullPipelineName.indexOf(replaceString) > -1 ? fullPipelineName.replace(replaceString, "") : fullPipelineName;
 };
 
+const formatBuildNumber = (buildNumber) => {
+    if(isNaN(buildNumber)) {
+        const RPM_LABEL_REGEX = /.+\.(\d+)-\d+\.noarch/;
+        let match = RPM_LABEL_REGEX.exec(buildNumber);
+        return match ? match[1] : buildNumber;
+    }
+    return buildNumber;
+};
+
 const Pipeline = ({pipeline, groupName}) => (
     <div className={getClass(pipeline.status)}>
         <p>{splitOnDashes(stripGroupName(groupName, pipeline.name))}</p>
-        <p>{pipeline["build-number"]}</p>
+        <p>{formatBuildNumber(pipeline["build-number"])}</p>
     </div>
 );
 

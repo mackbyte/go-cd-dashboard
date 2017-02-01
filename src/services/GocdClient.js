@@ -1,6 +1,5 @@
-var request = require('request');
-
-var gocdClient = {};
+const request = require('request'),
+      gocdClient = {};
 
 function getGitUrlFromDescription(description) {
     const GIT_URL_REGEX = /URL: (.+\.git), Branch: .+/;
@@ -8,20 +7,29 @@ function getGitUrlFromDescription(description) {
     return match ? match[1] : description;
 }
 
+function getRepoUrlFromDescription(description) {
+    const RPM_URL_REGEX = /Repository: \[repo_url=(.+)] - Package: \[package_spec=.+\.\*]/;
+    let match = RPM_URL_REGEX.exec(description);
+    return match ? match[1] : description;
+}
+
 function getAllUpstreamPipelines(material_revisions) {
     let materials = material_revisions.filter(function(mat_rev) {
-        return mat_rev.material.type === "Pipeline" || mat_rev.material.type === "Git";
+        return mat_rev.material.type === "Pipeline" || mat_rev.material.type === "Git" || mat_rev.material.type === "Package";
     }).map(function(mat_rev) {
-        if(mat_rev.material.type == "Pipeline") {
-            return {type: "pipeline", name: mat_rev.material.description};
-        } else {
-            return {type: "git", name: getGitUrlFromDescription(mat_rev.material.description)}
+        switch (mat_rev.material.type) {
+            case "Pipeline":
+                return {type: "pipeline", name: mat_rev.material.description};
+            case "Git":
+                return {type: "git", name: getGitUrlFromDescription(mat_rev.material.description)};
+            case "Package":
+                return {type: "package", name: getRepoUrlFromDescription(mat_rev.material.description)};
         }
     });
 
     if(materials.length > 1) {
         materials = materials.filter(material => {
-            return material.type === "pipeline";
+            return material.type !== "git";
         })
     }
 
@@ -33,9 +41,9 @@ gocdClient.getPipelineStatus = function(pipeline) {
         request
             .get('http://nebmgttgo01.ath.cdi.bskyb.com/go/api/pipelines/'+ pipeline +'/history', function(error, response, body) {
                 if(!error && response.statusCode == 200) {
-                    var pipelineResult = JSON.parse(body).pipelines[0];
+                    let pipelineResult = JSON.parse(body).pipelines[0];
                     if(pipelineResult) {
-                        var lastStage = pipelineResult.stages.slice(-1).pop();
+                        let lastStage = pipelineResult.stages.slice(-1).pop();
                         resolve({
                             "name": pipeline,
                             "status": lastStage.result,
@@ -63,9 +71,9 @@ gocdClient.getAllPipelines = function() {
         request
             .get('http://nebmgttgo01.ath.cdi.bskyb.com/go/api/config/pipeline_groups', function(error, response, body) {
                 if(!error && response.statusCode == 200) {
-                    var groups = JSON.parse(body);
+                    let groups = JSON.parse(body);
                     if(groups && groups.length > 0) {
-                        var pipelines = {};
+                        let pipelines = {};
                         groups.forEach(function(pipelineGroup) {
                             pipelines[pipelineGroup.name] = pipelineGroup.pipelines.map(function(pipeline) {return pipeline.name;})
                         });
