@@ -45,7 +45,7 @@ module.exports = function(io) {
     }
 
     function getRpmPromotionPipeline(pipelines) {
-        return pipelines.filter(pipeline => pipeline.name.endsWith('-rpmpromotion'))
+        return pipelines.filter(pipeline => pipeline.name.endsWith('-promote-rpm'))
                 .map(pipeline => pipeline.name)[0];
     }
 

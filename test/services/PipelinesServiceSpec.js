@@ -713,7 +713,7 @@ describe('Pipelines Service', () => {
             });
         });
 
-        it("should link pipelines that have package dependencies to rpmpromotion pipeline if available", () => {
+        it("should link pipelines that have package dependencies to promote-rpm pipeline if available", () => {
             allPipelinesStub.returnsPromise().resolves({
                 "Application": [
                     {
@@ -721,7 +721,7 @@ describe('Pipelines Service', () => {
                         upstream: [{type: "git", name: "git.com:some-project.git"}]
                     },
                     {
-                        name: "application-rpmpromotion",
+                        name: "application-promote-rpm",
                         upstream: [{type: "pipeline", name: "Build"}]
                     },
                     {
@@ -740,8 +740,8 @@ describe('Pipelines Service', () => {
                 .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
-                .withArgs("application-rpmpromotion")
-                .returnsPromise().resolves({"name": "application-rpmpromotion", "status": "Passed", "build-number": 1});
+                .withArgs("application-promote-rpm")
+                .returnsPromise().resolves({"name": "application-promote-rpm", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Deploy-Stage")
@@ -775,13 +775,13 @@ describe('Pipelines Service', () => {
                                     "status": "Passed"
                                 },
                                 "links": [
-                                    "application-rpmpromotion"
+                                    "application-promote-rpm"
                                 ]
                             },
-                            "application-rpmpromotion": {
+                            "application-promote-rpm": {
                                 "data": {
                                     "build-number": 1,
-                                    "name": "application-rpmpromotion",
+                                    "name": "application-promote-rpm",
                                     "status": "Passed"
                                 },
                                 "links": [
