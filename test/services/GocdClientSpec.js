@@ -4,40 +4,37 @@ const gocdClient = require('../../src/services/GocdClient'),
       nock = require('nock'),
       should = require('chai').should();
 
-describe('GoCD Client', function() {
-    afterEach(function() {
+describe('GoCD Client', () => {
+    afterEach(() => {
         nock.cleanAll();
     });
 
-    describe("getPipelineStatus", function() {
-        function mockPipelineHistory(status, response) {
+    describe("getPipelineStatus", () => {
+        const mockPipelineHistory = (status, response) => {
             nock('http://nebmgttgo01.ath.cdi.bskyb.com')
                 .get('/go/api/pipelines/mypipeline/history')
                 .reply(status, response);
-        }
+        };
 
-        it('should return latest stage info for valid pipeline and stage', function(done) {
+        it('should return latest stage info for valid pipeline and stage', () => {
             mockPipelineHistory(200, new PipelineHistoryBuilder().build());
 
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
                     should.exist(pipeline);
                     pipeline.should.have.property('status', 'Passed');
                     pipeline.should.have.property('build-number', 1);
-                    done();
                 });
         });
 
-        it('should reject request if not successful', function(done) {
+        it('should reject request if not successful', () => {
             mockPipelineHistory(400, {});
 
-            gocdClient.getPipelineStatus('mypipeline')
-                .catch(function(error) {
-                    done();
-                });
+            return gocdClient.getPipelineStatus('mypipeline')
+                .catch((error) => {});
         });
 
-        it("should return status for failed pipelines", function(done) {
+        it("should return status for failed pipelines", () => {
             mockPipelineHistory(200,
                 new PipelineHistoryBuilder()
                     .withPipeline(new PipelineBuilder()
@@ -47,215 +44,37 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
                     should.exist(pipeline);
                     pipeline.should.have.property('status', 'Failed');
                     pipeline.should.have.property('build-number', 1);
-                    done();
                 });
         });
 
-        it("should return list of upstream pipelines if available", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("pre-build")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal([
-                        {type: 'pipeline', name: 'pre-build'}
-                    ]);
-                    done();
-                });
-        });
-
-        it("should return empty list of upstream pipelines if not available", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder())
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.be.empty;
-                    done();
-                });
-        });
-
-        it("should return empty list of upstream pipelines if material type is not Pipeline, Git or Package", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("upstream")
-                            .withType("repo")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.be.empty;
-                    done();
-                });
-        });
-
-        it("should return all upstream pipelines that have material type of Pipeline", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("builder")
-                            .withType("Pipeline")
-                        )
-                        .addMaterial(new MaterialBuilder()
-                            .withDescription("github")
-                            .withType("Git")
-                        )
-                        .addMaterial(new MaterialBuilder()
-                            .withDescription("publisher")
-                            .withType("Pipeline")
-                        )
-                        .addMaterial(new MaterialBuilder()
-                            .withDescription("some other dependency")
-                            .withType("Other")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.have.lengthOf(2);
-                    pipeline.upstream.should.have.deep.members([
-                        {type: 'pipeline', name: 'builder'},
-                        {type: 'pipeline', name: 'publisher'},
-                    ]);
-                    done();
-                });
-        });
-
-        it("should contain GIT in upstream list if pipeline depends on it", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("URL: some-git.com:some-project.git, Branch: master")
-                            .withType("Git")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal([
-                        {type: 'git', name: 'some-git.com:some-project.git'},
-                    ]);
-                    done();
-                });
-        });
-
-        it("should return full description if git url cannot be extracted from it", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("https://github.com/some-team/some-project.git")
-                            .withType("Git")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal([
-                        {type: 'git', name: 'https://github.com/some-team/some-project.git'},
-                    ]);
-                    done();
-                });
-        });
-
-        it("should not return GIT in upstream list if there are materials of type pipeline available", function(done) {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("URL: some-git.com:some-project.git, Branch: master")
-                            .withType("Git")
-                        )
-                        .addMaterial(new MaterialBuilder()
-                            .withDescription("Build")
-                            .withType("Pipeline")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal([
-                        {type: 'pipeline', name: 'Build'},
-                    ]);
-                    done();
-                });
-        });
-
-        it("should return Package materials if available", (done) => {
-            mockPipelineHistory(200,
-                new PipelineHistoryBuilder()
-                    .withPipeline(new PipelineBuilder()
-                        .withMaterial(new MaterialBuilder()
-                            .withDescription("Repository: [repo_url=http://my-rpm-repo.com/releases/my-app/] - Package: [package_spec=my-app.*]")
-                            .withType("Package")
-                        )
-                    )
-                    .build());
-
-            gocdClient.getPipelineStatus('mypipeline')
-                .then((pipeline) => {
-                    should.exist(pipeline);
-                    pipeline.upstream.should.deep.equal([
-                        {type: 'package', name: 'http://my-rpm-repo.com/releases/my-app/'},
-                    ]);
-                    done();
-                });
-        });
-
-        it("should return pipeline with unknown status and negative build number if no history exists", function(done) {
+        it("should return pipeline with unknown status and negative build number if no history exists", () => {
             mockPipelineHistory(200,
                 new PipelineHistoryBuilder()
                     .withNoPipelines()
                     .build());
 
-            gocdClient.getPipelineStatus('mypipeline')
-                .then(function(pipeline) {
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
                     should.exist(pipeline);
                     pipeline.should.have.property('status', 'Unknown');
                     pipeline.should.have.property('build-number', -1);
-                    done();
                 });
         });
     });
 
-    describe("getAllPipelines", function() {
-        function mockPipelineGroups(status, response) {
+    describe("getAllPipelines", () => {
+        const mockPipelineGroups = (status, response) => {
             nock('http://nebmgttgo01.ath.cdi.bskyb.com')
                 .get('/go/api/config/pipeline_groups')
                 .reply(status, response);
-        }
+        };
 
-        it("should return pipeline group with one pipeline", function(done) {
+        it("should return pipeline group with one pipeline", () => {
             mockPipelineGroups(200,
                 new PipelineGroupsBuilder()
                     .withGroup(new PipelineGroupBuilder()
@@ -267,15 +86,21 @@ describe('GoCD Client', function() {
                     )
                     .build());
 
-            gocdClient.getAllPipelines()
-                .then(function(pipelines) {
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
                     should.exist(pipelines);
-                    pipelines.should.eql({"Application": ["Dev"]});
-                    done()
+                    pipelines.should.deep.equal({
+                        Application: [
+                            {
+                                name: "Dev",
+                                upstream: []
+                            }
+                        ]
+                    });
                 });
         });
 
-        it("should return pipeline group with one pipeline for pipeline with multiple stages", function(done) {
+        it("should return pipeline group with one pipeline for pipeline with multiple stages", () => {
             mockPipelineGroups(200,
                 new PipelineGroupsBuilder()
                     .withGroup(new PipelineGroupBuilder()
@@ -291,15 +116,21 @@ describe('GoCD Client', function() {
                     .build()
             );
 
-            gocdClient.getAllPipelines()
-                .then(function(pipelines) {
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
                     should.exist(pipelines);
-                    pipelines.should.eql({"Application": ["Dev"]});
-                    done()
+                    pipelines.should.deep.equal({
+                        Application: [
+                            {
+                                name: "Dev",
+                                upstream: []
+                            }
+                        ]
+                    });
                 });
         });
 
-        it("should return pipeline group with multiple pipelines for group with multiple pipelines", function(done) {
+        it("should return pipeline group with multiple pipelines for group with multiple pipelines", () => {
             mockPipelineGroups(200,
                 new PipelineGroupsBuilder()
                     .withGroup(new PipelineGroupBuilder()
@@ -320,18 +151,31 @@ describe('GoCD Client', function() {
                     .build()
             );
 
-            gocdClient.getAllPipelines()
-                .then(function(pipelines) {
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
                     should.exist(pipelines);
-                    pipelines.should.eql({
-                        "Restler": ["Build", "Test"],
-                        "Ingester": ["Publish"]
+                    pipelines.should.deep.equal({
+                        Restler: [
+                            {
+                                name: "Build",
+                                upstream: []
+                            },
+                            {
+                                name: "Test",
+                                upstream: []
+                            }
+                        ],
+                        Ingester: [
+                            {
+                                name: "Publish",
+                                upstream: []
+                            }
+                        ]
                     });
-                    done()
                 });
         });
 
-        it("should return all pipeline groups with pipelines", function(done) {
+        it("should return all pipeline groups with pipelines", () => {
             mockPipelineGroups(200,
                 new PipelineGroupsBuilder()
                     .withGroup(new PipelineGroupBuilder()
@@ -355,15 +199,224 @@ describe('GoCD Client', function() {
                     .build()
             );
 
-            gocdClient.getAllPipelines()
-                .then(function(pipelines) {
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
                     should.exist(pipelines);
-                    pipelines.should.eql({
-                        "Restler": ["Build", "Test"],
-                        "Ingester": ["Compile", "Publish"]
+                    pipelines.should.deep.equal({
+                        Restler: [
+                            {
+                                name: "Build",
+                                upstream: []
+                            },
+                            {
+                                name: "Test",
+                                upstream: []
+                            }
+                        ],
+                        Ingester: [
+                            {
+                                name: "Compile",
+                                upstream: []
+                            },
+                            {
+                                name: "Publish",
+                                upstream: []
+                            }
+                        ]
                     });
-                    done()
                 });
-        })
+        });
+
+        it("should return list of upstream pipelines if available", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("pre-build")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.deep.equal([
+                        {type: "pipeline", name: "pre-build"}
+                    ]);
+                });
+        });
+
+        it("should return empty list of upstream pipelines if not available", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder())
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.be.empty;
+                });
+        });
+
+        it("should return empty list of upstream pipelines if material type is not Pipeline, Git or Package", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("upstream")
+                                .withType("repo")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.be.empty;
+                });
+        });
+
+        it("should return all upstream pipelines that have material type of Pipeline", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("builder")
+                                .withType("Pipeline")
+                            )
+                            .addMaterial(new MaterialBuilder()
+                                .withDescription("github")
+                                .withType("Git")
+                            )
+                            .addMaterial(new MaterialBuilder()
+                                .withDescription("publisher")
+                                .withType("Pipeline")
+                            )
+                            .addMaterial(new MaterialBuilder()
+                                .withDescription("some other dependency")
+                                .withType("Other")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.have.lengthOf(2);
+                    pipeline.upstream.should.have.deep.members([
+                        {type: 'pipeline', name: 'builder'},
+                        {type: 'pipeline', name: 'publisher'},
+                    ]);
+                });
+        });
+
+        it("should contain GIT in upstream list if pipeline depends on it", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("URL: some-git.com:some-project.git, Branch: master")
+                                .withType("Git")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'git', name: 'some-git.com:some-project.git'},
+                    ]);
+                });
+        });
+
+        it("should return full description if git url cannot be extracted from it", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("https://github.com/some-team/some-project.git")
+                                .withType("Git")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'git', name: 'https://github.com/some-team/some-project.git'},
+                    ]);
+                });
+        });
+
+        it("should not return GIT in upstream list if there are materials of type pipeline available", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("URL: some-git.com:some-project.git, Branch: master")
+                                .withType("Git")
+                            )
+                            .addMaterial(new MaterialBuilder()
+                                .withDescription("Build")
+                                .withType("Pipeline")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'pipeline', name: 'Build'},
+                    ]);
+                });
+        });
+
+        it("should return Package materials if available", () => {
+            mockPipelineGroups(200,
+                new PipelineGroupsBuilder()
+                    .withGroup(new PipelineGroupBuilder()
+                        .withPipeline(new PipelineBuilder()
+                            .withMaterial(new MaterialBuilder()
+                                .withDescription("Repository: [repo_url=http://my-rpm-repo.com/releases/my-app/] - Package: [package_spec=my-app.*]")
+                                .withType("Package")
+                            )
+                        )
+                    )
+                .build());
+
+            return gocdClient.getAllPipelines()
+                .then(pipelines => {
+                    should.exist(pipelines);
+                    let pipeline = pipelines.Application[0];
+                    pipeline.upstream.should.deep.equal([
+                        {type: 'package', name: 'http://my-rpm-repo.com/releases/my-app/'},
+                    ]);
+                });
+        });
     });
 });

@@ -1,11 +1,5 @@
 const gocdResponseBuilder = require('./GocdResponseBuilder'),
-    PipelineGroupsBuilder = gocdResponseBuilder.PipelineGroupsBuilder,
-    PipelineGroupBuilder = gocdResponseBuilder.PipelineGroupBuilder,
-    PipelineSummaryBuilder = gocdResponseBuilder.PipelineSummaryBuilder,
-    PipelineHistoryBuilder = gocdResponseBuilder.PipelineHistoryBuilder,
-    PipelineBuilder = gocdResponseBuilder.PipelineBuilder,
-    StageBuilder = gocdResponseBuilder.StageBuilder,
-    MaterialBuilder = gocdResponseBuilder.MaterialBuilder;
+    { PipelineGroupsBuilder, PipelineGroupBuilder, PipelineSummaryBuilder, PipelineHistoryBuilder, PipelineBuilder, StageBuilder, MaterialBuilder } = gocdResponseBuilder,
     should = require('chai').should();
 
 describe('GoCD Response Builder', () => {
@@ -132,9 +126,7 @@ describe('GoCD Response Builder', () => {
                                 "result": "Passed"
                             }
                         ],
-                        "build_cause": {
-                            "material_revisions": []
-                        }
+                        "materials": []
                     }
                 ]
             };
@@ -164,9 +156,7 @@ describe('GoCD Response Builder', () => {
                         "result": "Passed"
                     }
                 ],
-                "build_cause": {
-                    "material_revisions": []
-                }
+                "materials": []
             };
             pipeline.should.deep.equal(expected);
         });
@@ -188,9 +178,7 @@ describe('GoCD Response Builder', () => {
                         "result": "Passed"
                     }
                 ],
-                "build_cause": {
-                    "material_revisions": []
-                }
+                "materials": []
             };
             pipeline.should.deep.equal(expected);
         });
@@ -210,9 +198,7 @@ describe('GoCD Response Builder', () => {
                         "result": "Passed"
                     }
                 ],
-                "build_cause": {
-                    "material_revisions": []
-                }
+                "materials": []
             };
             pipeline.should.deep.equal(expected);
         });
@@ -239,9 +225,7 @@ describe('GoCD Response Builder', () => {
                         "result": "Passed"
                     }
                 ],
-                "build_cause": {
-                    "material_revisions": []
-                }
+                "materials": []
             };
             pipeline.should.deep.equal(expected);
         });
@@ -254,20 +238,20 @@ describe('GoCD Response Builder', () => {
             pipeline.label.should.equal(5);
         });
         
-        it("should be able to add materials", () => {
+        it("should be able to set materials", () => {
             let pipeline = new PipelineBuilder()
                 .withMaterial(new MaterialBuilder())
                 .build();
 
-            should.exist(pipeline.build_cause.material_revisions);
-            pipeline.build_cause.material_revisions.should.have.length(1);
+            should.exist(pipeline.materials);
+            pipeline.materials.should.have.length(1);
 
-            let material = pipeline.build_cause.material_revisions[0].material;
+            let material = pipeline.materials[0];
             material.should.have.property("description", "upstream-pipeline");
             material.should.have.property("type", "Pipeline");
         });
 
-        it("should be able to add materials", () => {
+        it("should be able to add multiple materials", () => {
             let pipeline = new PipelineBuilder()
                 .withMaterial(new MaterialBuilder())
                 .addMaterial(new MaterialBuilder()
@@ -276,14 +260,14 @@ describe('GoCD Response Builder', () => {
                 )
                 .build();
 
-            should.exist(pipeline.build_cause.material_revisions);
-            pipeline.build_cause.material_revisions.should.have.length(2);
+            should.exist(pipeline.materials);
+            pipeline.materials.should.have.length(2);
 
-            let material = pipeline.build_cause.material_revisions[0].material;
+            let material = pipeline.materials[0];
             material.should.have.property("description", "upstream-pipeline");
             material.should.have.property("type", "Pipeline");
 
-            let material2 = pipeline.build_cause.material_revisions[1].material;
+            let material2 = pipeline.materials[1];
             material2.should.have.property("description", "github.com");
             material2.should.have.property("type", "git");
         });

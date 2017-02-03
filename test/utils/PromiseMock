@@ -1,6 +1,6 @@
 function all(promises) {
-    var results = [];
-    var promiseCount = promises.length;
+    let results = [],
+        promiseCount = promises.length;
 
     return new Promise(function(resolve) {
         promises.forEach(function(promise) {
@@ -15,9 +15,9 @@ function all(promises) {
 }
 
 function Promise(fn) {
-    var state = 'pending';
-    var value;
-    var deferred;
+    let state = 'pending',
+        value,
+        deferred;
 
     function resolve(newValue) {
         value = newValue;

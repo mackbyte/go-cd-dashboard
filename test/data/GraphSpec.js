@@ -370,4 +370,27 @@ describe("Graph", function() {
             });
         })    
     });
+
+    describe("addData", function() {
+        it("should update a nodes data based on id", function() {
+            graph.addNode("a", {test: "value"}, []);
+            graph.getNode("a").data.should.deep.equal({test: "value"});
+
+            graph.addData("a", {another: "field"});
+            graph.getNode("a").data.should.deep.equal({test: "value", another: "field"});
+        });
+
+        it("should do nothing if node does not exist", function() {
+            graph.addData("a", {another: "field"});
+            should.equal(graph.getNode("a"), undefined);
+        });
+
+        it("should overwrite fields with the same name", function() {
+            graph.addNode("a", {one: 1, two: 1}, []);
+            graph.getNode("a").data.should.deep.equal({one: 1, two: 1});
+
+            graph.addData("a", {two: 2});
+            graph.getNode("a").data.should.deep.equal({one: 1, two: 2});
+        });
+    });
 });

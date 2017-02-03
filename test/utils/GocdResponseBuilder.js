@@ -90,24 +90,23 @@ PipelineBuilder.prototype.addMaterial = function(material) {
 };
 
 PipelineBuilder.prototype.build = function() {
-    var pipeline = this;
-    var stages = [];
+    const pipeline = this;
+    let stages = [],
+        materials = [];
+
     this.stages.forEach(function(stage) {
         stages.push(stage.build())
     });
 
-    var materials = [];
     this.materials.forEach(function(material) {
-        materials.push({material: material.build()})
+        materials.push(material.build())
     });
 
     return {
         name: pipeline.name,
-        stages: stages,
+        stages,
         label: pipeline.label,
-        build_cause: {
-            material_revisions: materials
-        }
+        materials
     }
 };
 

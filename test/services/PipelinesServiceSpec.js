@@ -35,14 +35,26 @@ describe('Pipelines Service', () => {
         });
 
         it("should get list of pipelines for single group with status and build number", () => {
-            allPipelinesStub.returnsPromise().resolves({"Application": ["Build", "Test"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Application": [
+                    {
+                        name: "Build",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Test",
+                        upstream: [{type: "pipeline", name: "Build"}]
+                    }
+                ]
+            });
+
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Test")
-                .returnsPromise().resolves({"name": "Test", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}]});
+                .returnsPromise().resolves({"name": "Test", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -87,20 +99,37 @@ describe('Pipelines Service', () => {
 
         it("should get list of all pipelines for multiple groups with status", () => {
             allPipelinesStub.returnsPromise().resolves({
-                "Application1": ["Build"],
-                "Application2": ["Publish", "Deploy"]
+                "Application1": [
+                    {
+                        name: "Build",
+                        upstream: [
+                            {type: "git", name: "git.com:some-project.git"}
+                        ]
+                    }
+                ],
+                "Application2": [
+                    {
+                        name: "Publish",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Deploy",
+                        upstream: [{type: "pipeline", name: "Publish"}]
+                    }
+                ]
             });
+
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Deploy")
-                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Publish"}]});
+                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -167,20 +196,34 @@ describe('Pipelines Service', () => {
         });
 
         it("should return pipelines in order of breadth first search with git as source node", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"Application": ["Build", "Publish", "Deploy"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Application": [
+                    {
+                        name: "Build",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name:"Publish",
+                        upstream: [{type: "pipeline", name: "Build"}]
+                    },
+                    {
+                        name: "Deploy",
+                        upstream: [{type: "pipeline", name: "Publish"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Deploy")
-                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Publish"}]});
+                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -233,12 +276,18 @@ describe('Pipelines Service', () => {
         });
 
         it("should not include git nodes", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"Application": ["Build"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Application": [
+                    {
+                        name: "Build",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -271,20 +320,34 @@ describe('Pipelines Service', () => {
         });
 
         it("should return pipelines that have multiple git nodes for groups which are not connected", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"NFT-Suite": ["Hour", "Overnight", "Weekend"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "NFT-Suite": [
+                    {
+                        name: "Hour",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Overnight",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Weekend",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Hour")
-                .returnsPromise().resolves({"name": "Hour", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Hour", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Overnight")
-                .returnsPromise().resolves({"name": "Overnight", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Overnight", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Weekend")
-                .returnsPromise().resolves({"name": "Weekend", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Weekend", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -335,20 +398,34 @@ describe('Pipelines Service', () => {
         });
 
         it("should remove links to build when another link is available to produce correct order", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"Application": ["Build", "Publish", "Deploy"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Application": [
+                    {
+                        name: "Build",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Publish",
+                        upstream: [{type: "pipeline", name: "Build"}]
+                    },
+                    {
+                        name: "Deploy",
+                        upstream: [{type: "pipeline", name: "Build"}, {type: "pipeline", name: "Publish"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Deploy")
-                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}, {type: "pipeline", name: "Publish"}]});
+                .returnsPromise().resolves({"name": "Deploy", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -400,17 +477,31 @@ describe('Pipelines Service', () => {
             });
         });
 
-        it("should wait until all pipeline status requests have completed before updating the graph", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"Application": ["Build", "Publish", "Deploy"]});
+        it("should update the graph with pipeline status when available", () => {
+            allPipelinesStub.returnsPromise().resolves({
+                "Application": [
+                    {
+                        name: "Build",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Publish",
+                        upstream: [{type: "pipeline", name: "Build"}]
+                    },
+                    {
+                        name: "Deploy",
+                        upstream: [{type: "pipeline", name: "Build"}, {type: "pipeline", name: "Publish"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Publish")
-                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}]});
+                .returnsPromise().resolves({"name": "Publish", "status": "Passed", "build-number": 1});
 
             let deployStub = pipelineStatusStub
                 .withArgs("Deploy")
@@ -418,9 +509,51 @@ describe('Pipelines Service', () => {
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
-            pipelines.should.deep.equal({});
+            pipelines.should.deep.equal({
+                "Application": {
+                    "git.com:some-project.git": {
+                        "nodes": {
+                            "Build": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Build",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Publish"
+                                ]
+                            },
+                            "Deploy": {
+                                "data": {
+                                    "name": "Deploy"
+                                },
+                                "links": []
+                            },
+                            "GIT": {
+                                "data": {
+                                    "url": "git.com:some-project.git"
+                                },
+                                "links": [
+                                    "Build"
+                                ]
+                            },
+                            "Publish": {
+                                "data": {
+                                    "build-number": 1,
+                                    "name": "Publish",
+                                    "status": "Passed"
+                                },
+                                "links": [
+                                    "Deploy"
+                                ]
+                            }
+                        },
+                        "source": "GIT"
+                    }
+                }
+            });
 
-            deployStub.resolves({"name": "Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}, {type: "pipeline", name: "Publish"}]});
+            deployStub.resolves({"name": "Deploy", "status": "Passed", "build-number": 1});
 
             pipelines = pipelinesService.getPipelines();
             should.exist(pipelines);
@@ -472,24 +605,42 @@ describe('Pipelines Service', () => {
         });
 
         it("should return separate pipeline for each different git repo", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"Libraries": ["Common", "Common-Deploy", "Common-Test", "Common-Test-Deploy"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Libraries": [
+                    {
+                        name: "Common",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "Common-Deploy",
+                        upstream: [{type: "pipeline", name: "Common"}]
+                    },
+                    {
+                        name: "Common-Test",
+                        upstream: [{type: "git", name: "git.com:some-other-project.git"}]
+                    },
+                    {
+                        name: "Common-Test-Deploy",
+                        upstream: [{type: "pipeline", name: "Common-Test"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Common")
-                .returnsPromise().resolves({"name": "Common", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Common", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Common-Deploy")
-                .returnsPromise().resolves({"name": "Common-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common"}]});
+                .returnsPromise().resolves({"name": "Common-Deploy", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Common-Test")
-                .returnsPromise().resolves({"name": "Common-Test", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-other-project.git"}]});
+                .returnsPromise().resolves({"name": "Common-Test", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Common-Test-Deploy")
-                .returnsPromise().resolves({"name": "Common-Test-Deploy", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Common-Test"}]});
+                .returnsPromise().resolves({"name": "Common-Test-Deploy", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
             let pipelines = pipelinesService.getPipelines();
@@ -563,24 +714,42 @@ describe('Pipelines Service', () => {
         });
 
         it("should link pipelines that have package dependencies to rpmpromotion pipeline if available", () => {
-            allPipelinesStub
-                .returnsPromise().resolves({"Application": ["Build", "application-rpmpromotion", "Deploy-Stage", "Deploy-Prod"]});
+            allPipelinesStub.returnsPromise().resolves({
+                "Application": [
+                    {
+                        name: "Build",
+                        upstream: [{type: "git", name: "git.com:some-project.git"}]
+                    },
+                    {
+                        name: "application-rpmpromotion",
+                        upstream: [{type: "pipeline", name: "Build"}]
+                    },
+                    {
+                        name: "Deploy-Stage",
+                        upstream: [{type: "package", name: "http://my-rpm-repo.com/releases/my-app/"}]
+                    },
+                    {
+                        name: "Deploy-Prod",
+                        upstream: [{type: "package", name: "http://my-rpm-repo.com/releases/my-app/"}]
+                    }
+                ]
+            });
 
             pipelineStatusStub
                 .withArgs("Build")
-                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1, "upstream": [{type: "git", name: "git.com:some-project.git"}]});
+                .returnsPromise().resolves({"name": "Build", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("application-rpmpromotion")
-                .returnsPromise().resolves({"name": "application-rpmpromotion", "status": "Passed", "build-number": 1, "upstream": [{type: "pipeline", name: "Build"}]});
+                .returnsPromise().resolves({"name": "application-rpmpromotion", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Deploy-Stage")
-                .returnsPromise().resolves({"name": "Deploy-Stage", "status": "Passed", "build-number": 1, "upstream": [{type: "package", name: "http://my-rpm-repo.com/releases/my-app/"}]});
+                .returnsPromise().resolves({"name": "Deploy-Stage", "status": "Passed", "build-number": 1});
 
             pipelineStatusStub
                 .withArgs("Deploy-Prod")
-                .returnsPromise().resolves({"name": "Deploy-Prod", "status": "Passed", "build-number": 1, "upstream": [{type: "package", name: "http://my-rpm-repo.com/releases/my-app/"}]});
+                .returnsPromise().resolves({"name": "Deploy-Prod", "status": "Passed", "build-number": 1});
 
             pipelinesService.update();
 

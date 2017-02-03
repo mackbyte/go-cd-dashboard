@@ -116,25 +116,29 @@ module.exports = function(io) {
         return sourceLinks;
     }
 
-    function updatePipelineGroup(groupName, pipelineNames) {
-        let pipelineRequests = pipelineNames.map(pipelineName => {
-            return gocdClient.getPipelineStatus(pipelineName);
+    function updateStatuses(pipelineGraph) {
+        pipelineGraph.getNodes().forEach(pipeline => {
+            if(pipeline !== pipelineGraph.getSource()) {
+                gocdClient.getPipelineStatus(pipeline)
+                    .then(pipelineStatus => pipelineGraph.addData(pipeline, pipelineStatus));
+            }
         });
+    }
 
-        Promise.all(pipelineRequests)
-            .then(pipelines => {
-                let sources = getUniqueGitSources(pipelines);
-                let sourceLinks = getSourceLinks(sources);
-                let allLinks = getInvertedLinks(pipelines, sourceLinks);
+    function updatePipelineGroup(groupName, pipelines) {
+        let sources = getUniqueGitSources(pipelines);
+        let sourceLinks = getSourceLinks(sources);
+        let allLinks = getInvertedLinks(pipelines, sourceLinks);
 
-                sources.forEach(source => {
-                    let pipelineGraph = getPipelineGraph(groupName, source.url);
-                    pipelineGraph.addSourceNode("GIT", {url: source.url}, source.links);
-                    source.links.forEach(link => {
-                        addPipelineToGraph(pipelineGraph, pipelines, allLinks, link);
-                    });
-                });
+        sources.forEach(source => {
+            let pipelineGraph = getPipelineGraph(groupName, source.url);
+            pipelineGraph.addSourceNode("GIT", {url: source.url}, source.links);
+            source.links.forEach(link => {
+                addPipelineToGraph(pipelineGraph, pipelines, allLinks, link);
             });
+
+            updateStatuses(pipelineGraph);
+        });
     }
 
     pipelinesService.update = function() {

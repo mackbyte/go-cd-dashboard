@@ -37,6 +37,13 @@ Graph.prototype.addLinks = function(id, links) {
     }
 };
 
+Graph.prototype.addData = function(id, newData) {
+    if(this.nodes.hasOwnProperty(id)) {
+        let currentData = this.nodes[id].data;
+        Object.assign(currentData, newData);
+    }
+};
+
 Graph.prototype.addNode = function(id, data, links) {
     if(links) {
         createNodesThatDontExist(this, links);
