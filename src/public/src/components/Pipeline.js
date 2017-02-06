@@ -6,6 +6,8 @@ const getStatusClass = (status) => {
         return 'pipeline-success';
     } else if(status === 'Unknown') {
         return 'pipeline-unknown';
+    } else if(status === 'NoHistory') {
+        return 'pipeline-nohistory';
     } else {
         return 'pipeline-failed';
     }
@@ -25,6 +27,8 @@ const formatBuildNumber = (buildNumber) => {
         const RPM_LABEL_REGEX = /.+\.(\d+)-\d+\.noarch/;
         let match = RPM_LABEL_REGEX.exec(buildNumber);
         return match ? match[1] : buildNumber;
+    } else if(buildNumber < 0) {
+        return ''
     }
     return buildNumber;
 };

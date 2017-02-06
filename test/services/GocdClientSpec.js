@@ -61,8 +61,66 @@ describe('GoCD Client', () => {
             return gocdClient.getPipelineStatus('mypipeline')
                 .then(pipeline => {
                     should.exist(pipeline);
-                    pipeline.should.have.property('status', 'Unknown');
+                    pipeline.should.have.property('status', 'NoHistory');
                     pipeline.should.have.property('build-number', -1);
+                });
+        });
+
+        it("should return pipeline with building status and build number when any stage in pipeline is building", () => {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withStage(new StageBuilder()
+                            .withResult("Unknown")
+                        )
+                    )
+                    .build());
+
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
+                    should.exist(pipeline);
+                    pipeline.should.have.property('status', 'Unknown');
+                    pipeline.should.have.property('build-number', 1);
+                });
+        });
+
+        it("should return pipeline success if all stages that have run have passed", () => {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withStage(new StageBuilder()
+                            .withResult("Passed")
+                        ).addStage(new StageBuilder()
+                            .withResult(undefined)
+                        )
+                    )
+                    .build());
+
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
+                    should.exist(pipeline);
+                    pipeline.should.have.property('status', 'Passed');
+                    pipeline.should.have.property('build-number', 1);
+                });
+        });
+
+        it("should return pipeline failed if all stages that have run have failed", () => {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withStage(new StageBuilder()
+                            .withResult("Failed")
+                        ).addStage(new StageBuilder()
+                            .withResult(undefined)
+                        )
+                    )
+                    .build());
+
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
+                    should.exist(pipeline);
+                    pipeline.should.have.property('status', 'Failed');
+                    pipeline.should.have.property('build-number', 1);
                 });
         });
     });

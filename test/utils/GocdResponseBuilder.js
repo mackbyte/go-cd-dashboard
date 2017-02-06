@@ -216,12 +216,12 @@ MaterialBuilder.prototype.build = function() {
 };
 
 module.exports = {
-    StageBuilder: StageBuilder,
-    PipelineBuilder: PipelineBuilder,
-    PipelineHistoryBuilder: PipelineHistoryBuilder,
-    PipelineSummaryBuilder: PipelineSummaryBuilder,
-    PipelineGroupBuilder: PipelineGroupBuilder,
-    PipelineGroupsBuilder: PipelineGroupsBuilder,
-    MaterialBuilder: MaterialBuilder
+    StageBuilder,
+    PipelineBuilder,
+    PipelineHistoryBuilder,
+    PipelineSummaryBuilder,
+    PipelineGroupBuilder,
+    PipelineGroupsBuilder,
+    MaterialBuilder
 };
 

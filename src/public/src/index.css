@@ -54,3 +54,7 @@ html, body, p {
 .pipeline-unknown {
   background: #D9B32A;
 }
+
+.pipeline-nohistory {
+  background: #a7a2a7;
+}

@@ -43,16 +43,16 @@ gocdClient.getPipelineStatus = (pipeline) => {
                 if(!error && response.statusCode == 200) {
                     let pipelineResult = JSON.parse(body).pipelines[0];
                     if(pipelineResult) {
-                        let lastStage = pipelineResult.stages.slice(-1).pop();
+                        let lastStageResult = pipelineResult.stages.map(stage => stage.result).filter(result => result != undefined).slice(-1)[0];
                         resolve({
                             "name": pipeline,
-                            "status": lastStage.result,
+                            "status": lastStageResult,
                             "build-number": pipelineResult.label,
-                        });
+                        })
                     } else {
                         resolve({
                             "name": pipeline,
-                            "status": "Unknown",
+                            "status": "NoHistory",
                             "build-number": -1,
                         })
                     }
