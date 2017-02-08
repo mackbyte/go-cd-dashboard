@@ -49,6 +49,14 @@ module.exports = function(io) {
                 .map(pipeline => pipeline.name)[0];
     }
 
+    let constructLink = function(upstreamLink, links, rpmPromotionPipeline, pipeline) {
+        if(upstreamLink.type === 'package') {
+            links.push({from: rpmPromotionPipeline, to: pipeline.name});
+        } else {
+            links.push({from: upstreamLink.name, to: pipeline.name});
+        }
+    };
+
     // Must remove unneeded links to build stage (stage after git)
     function getInvertedLinks(pipelines, sourceLinks) {
         let links = [],
@@ -58,21 +66,13 @@ module.exports = function(io) {
             if(pipeline.upstream.length > 1) {
                 pipeline.upstream.forEach(upstreamLink => {
                     if(sourceLinks.indexOf(upstreamLink.name) < 0) {
-                        if(upstreamLink.type === 'package') {
-                            links.push({from: rpmPromotionPipeline, to: pipeline.name});
-                        } else {
-                            links.push({from: upstreamLink.name, to: pipeline.name});
-                        }
+                        constructLink(upstreamLink, links, rpmPromotionPipeline, pipeline);
                     }
                 });
             } else {
                 pipeline.upstream.forEach(upstreamLink => {
-                    if(upstreamLink.type === 'package') {
-                        links.push({from: rpmPromotionPipeline, to: pipeline.name});
-                    } else {
-                        links.push({from: upstreamLink.name, to: pipeline.name});
-                    }
-                })
+                    constructLink(upstreamLink, links, rpmPromotionPipeline, pipeline);
+                });
             }
         });
         return links;
@@ -126,9 +126,9 @@ module.exports = function(io) {
     }
 
     function updatePipelineGroup(groupName, pipelines) {
-        let sources = getUniqueGitSources(pipelines);
-        let sourceLinks = getSourceLinks(sources);
-        let allLinks = getInvertedLinks(pipelines, sourceLinks);
+        let sources = getUniqueGitSources(pipelines),
+            sourceLinks = getSourceLinks(sources),
+            allLinks = getInvertedLinks(pipelines, sourceLinks);
 
         sources.forEach(source => {
             let pipelineGraph = getPipelineGraph(groupName, source.url);

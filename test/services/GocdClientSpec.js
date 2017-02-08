@@ -123,6 +123,30 @@ describe('GoCD Client', () => {
                     pipeline.should.have.property('build-number', 1);
                 });
         });
+
+        it("should return list of stage statuses if pipeline has multiple stages", () => {
+            mockPipelineHistory(200,
+                new PipelineHistoryBuilder()
+                    .withPipeline(new PipelineBuilder()
+                        .withStage(new StageBuilder()
+                            .withName("first")
+                            .withResult("Passed")
+                        ).addStage(new StageBuilder()
+                            .withName("second")
+                            .withResult("Failed")
+                        )
+                    )
+                    .build());
+
+            return gocdClient.getPipelineStatus('mypipeline')
+                .then(pipeline => {
+                    should.exist(pipeline);
+                    pipeline.stages.should.deep.equal([
+                        {name: 'first', result: 'Passed'},
+                        {name: 'second', result: 'Failed'}
+                    ]);
+                });
+        });
     });
 
     describe("getAllPipelines", () => {

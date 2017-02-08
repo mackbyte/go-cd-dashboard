@@ -33,10 +33,25 @@ const formatBuildNumber = (buildNumber) => {
     return buildNumber;
 };
 
+const formatStageName = (name) => {
+    const STAGE_NAME_REGEX = /.+-(.+)/;
+    let match = STAGE_NAME_REGEX.exec(name);
+    return match ? match[1] : name;
+};
+
+const renderStages = (stages) => {
+    if(stages.length > 1) {
+        return (<div className="stages">
+            {stages.map((stage, index) => (<div key={index} className={`${getStatusClass(stage.result)} stage`}>{formatStageName(stage.name)}</div>))}
+        </div>)
+    }
+};
+
 const Pipeline = ({pipeline, groupName}) => (
     <div className={getClass(pipeline.status)}>
-        <p>{splitOnDashes(stripGroupName(groupName, pipeline.name))}</p>
-        <p>{formatBuildNumber(pipeline["build-number"])}</p>
+        <div className="pipeline-name">{splitOnDashes(stripGroupName(groupName, pipeline.name))}</div>
+        <div className="pipeline-number">{formatBuildNumber(pipeline["build-number"])}</div>
+        {renderStages(pipeline.stages)}
     </div>
 );
 
