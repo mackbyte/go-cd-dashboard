@@ -28,7 +28,7 @@ body {
 
 .pipeline-group {
     display: flex;
-    flex: 1 auto;
+    flex: 1;
 }
 
 .pipeline-group-name, .pipeline {
@@ -39,7 +39,7 @@ body {
 }
 
 .pipeline-group-name {
-    flex: 0 auto;
+    flex: 0;
     min-width: 175px;
     max-width: 175px;
 }
@@ -60,11 +60,6 @@ body {
     border-radius: 10px;
     border: 2px solid #123C4A;
     justify-content: center;
-}
-
-.pipeline-container {
-    display: flex;
-    flex: 1 auto;
 }
 
 .pipeline-success {

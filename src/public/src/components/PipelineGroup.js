@@ -13,7 +13,7 @@ const PipelineGroup = ({name, group}) => (
             graph.fromJson(group[source]);
             const [, ...pipelines] = graph.breadthFirstSearch(graph.getSource());
             return (
-                <div className="pipeline-container" key={index}>
+                <div className="pipeline-group" key={index}>
                     {pipelines.map((pipelineName, index) =>
                         <Pipeline key={index} pipeline={graph.getNode(pipelineName).data} groupName={name}/>
                     )}
