@@ -8,7 +8,8 @@ const config = {
         "ottcs-rest",
         "sky-media-client",
         "title-service-v1",
-        "Infrastructure"
+        "Infrastructure",
+        "title-adapter"
     ],
     snow_enabled: false
 };
