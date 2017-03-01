@@ -9,7 +9,8 @@ const config = {
         "sky-media-client",
         "title-service-v1",
         "Infrastructure",
-        "gz-ott-title-adapter"
+        "gz-ott-title-adapter",
+        "gz-ott-filebeat"
     ],
     snow_enabled: false
 };
