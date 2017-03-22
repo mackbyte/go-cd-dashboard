@@ -10,7 +10,8 @@ const config = {
         "title-service-v1",
         "Infrastructure",
         "gz-ott-title-adapter",
-        "gz-ott-filebeat"
+        "gz-ott-filebeat",
+        "Libraries"
     ],
     snow_enabled: false
 };
