@@ -11,6 +11,8 @@ const config = {
         "Infrastructure",
         "gz-ott-title-adapter",
         "gz-ott-filebeat",
+        "Rancher-Monitoring",
+        "rabbitmq",
         "Libraries"
     ],
     snow_enabled: false
